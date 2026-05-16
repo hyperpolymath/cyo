@@ -34,6 +34,16 @@ python, ...) per project as you enter it.
 * Survives: an old crate still building on the toolchain it was written for,
   without a manual `rustup` dance.
 
+== If shell config sprawl nags you: modshells
+
+https://github.com/hyperpolymath/modshells[modshells] is a Rust-powered
+manager that turns a monolithic `.bashrc`/`.zshrc` into clean,
+category-based modules — a compiled tool for your developer identity
+instead of an ever-growing script.
+
+* Survives: a new machine reaching your full shell setup from versioned
+  modules, not a copy-pasted dotfile that has quietly rotted.
+
 == If a C++ dependency nags you: cxx
 
 Hand-written FFI is where Rust's safety story goes to die.
