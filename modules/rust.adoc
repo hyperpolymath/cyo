@@ -1,0 +1,57 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Route: Sharpening the Blade (Rust)
+
+[.lead]
+_You already chose a sharp weapon. This route is about keeping the edge._
+
+Rust is not on this map to be fixed; you came here on purpose. This route is for
+the part of you that resents waiting on your own tools. Each path is independent
+— take what nags you.
+
+== If the build loop nags you: a faster forge
+
+Two complementary moves:
+
+* https://github.com/cargo-bins/cargo-binstall[cargo-binstall] fetches
+  prebuilt binaries for dev tools instead of compiling each from source.
+* https://nexte.st/[cargo-nextest] is a faster, clearer test runner with a
+  better failure model than `cargo test` in large suites.
+
+Then attack the real bottleneck — linking. On Linux,
+https://github.com/rui314/mold[mold] makes the link step very close to
+instantaneous; point Cargo at it in `.cargo/config.toml`. On macOS the modern
+Apple linker (recent Xcode) is already fast, so the worthwhile move there is
+`cargo-nextest` and a leaner dependency graph, not a third-party linker.
+
+* Survives: a one-line change rebuilding fast enough that flow does not break.
+
+== If toolchain drift nags you: mise
+
+https://mise.jdx.dev/[mise] pins and auto-activates the right `rustc` (and node,
+python, ...) per project as you enter it.
+
+* Survives: an old crate still building on the toolchain it was written for,
+  without a manual `rustup` dance.
+
+== If a C++ dependency nags you: cxx
+
+Hand-written FFI is where Rust's safety story goes to die.
+https://cxx.rs/[cxx] generates a checked bridge so the Rust↔C++ boundary stays
+memory-safe by construction.
+
+* Survives: linking a large C++ library without that boundary becoming the
+  source of your next CVE. Cost: you describe the bridge explicitly.
+  Reversible: it is additive — existing `unsafe` FFI keeps working beside it.
+
+== When sharp is not enough
+
+If the adventure you actually want is *proof* that a class of bug cannot occur —
+not just that the borrow checker is satisfied — that is a different class
+entirely. Walk to `spark`, the Paladin.
+
+== This route opens onto
+
+* `spark` — the Paladin, for the crown-jewel logic that must be proven.
+* `cpp` — the Artificer, if the C++ side is where the real friction lives.
+* `git` — the Chronicler, to keep a fast project's history legible.

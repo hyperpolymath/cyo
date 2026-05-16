@@ -1,0 +1,67 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Route: Wizardry (Logic & Neuro-Symbolic)
+
+[.lead]
+_You want to stop telling the machine how, and start telling it what is true._
+
+This is the wizard's route, and it is openly an adventure in learning. You will
+write a few lines that look like nothing and watch them run *backwards*. miniKanren
+is relational magic: you do not call a function, you state a relationship and ask
+the engine to find every world in which it holds. Some of it will not click for
+a while. That is the fun, not a defect.
+
+== The grimoire: Datalog and Prolog
+
+Recursive relationships are awkward in loops and `if`s, and SQL gives up on them
+quickly. Declarative logic does not.
+
+* https://en.wikipedia.org/wiki/Datalog[Datalog] and Prolog let you express
+  recursive queries directly. This is not a museum piece — Datalog powers modern
+  engines (Datomic, CozoDB) and serious static-analysis tools.
+
+What your code can now survive: a requirement that says "find all X related to Y
+through any chain" without you hand-rolling a graph traversal each time the
+requirement shifts.
+
+== The spell that runs both ways: miniKanren
+
+http://minikanren.org/[miniKanren] is a tiny relational language you embed
+*inside* the host you already use — you do not leave your world to cast it:
+
+* Clojure — `core.logic`
+* Python — `kanren` / `microKanren` ports
+* Rust — `canrun`
+* Scheme/Racket — the reference home
+
+You define a relation once; the same relation can check, generate, or solve for
+missing pieces. Cost: the mental model is genuinely new, and naive searches
+explore dead ends. Reversibility: total — it is a library in your existing
+codebase.
+
+== Binding a familiar: neuro-symbolic
+
+Neural nets are strong on messy perception and weak on rules; symbolic logic is
+the reverse. The neuro-symbolic adventure binds them:
+
+* https://github.com/ML-Research/deepproblog[DeepProbLog] and Scallop let a
+  network output symbols that a logic engine then reasons over rigorously.
+
+== The wizard with a trained familiar: neural-guided search
+
+Pure symbolic search drowns in useless branches. The advanced spell:
+
+. Use miniKanren (host of your choice) to define the *valid* search space.
+. Train a small network to predict *which branch to try first*.
+
+You keep the provable correctness of the symbolic engine and gain the intuition
+of the learned guide. See https://github.com/xuexue/neuralkanren[neuralkanren]
+for prior art.
+
+== This route opens onto
+
+* `spark` — the Paladin, when the thing you searched for must then be *proven*
+  correct, not merely found.
+* `python` — provisioning, since most NeSy training stacks live there.
+* `scripts` — the Federation, if you want the symbolic core to outlive the host
+  language it was prototyped in.

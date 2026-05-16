@@ -1,43 +1,53 @@
-# `cyo`: Choose Your Own (Modern Tooling Adventure)
+<!--
+SPDX-License-Identifier: MPL-2.0
+SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+-->
 
-> "The world of software is full of ceremony. `cyo` helps you cut through the noise and choose the best modern path for your stack."
+# `cyo` — Choose Your Own
 
-## What is `cyo`?
-Inspired by projects like *Learn X in Y minutes*, `cyo` is a terminal-first guide to modernizing your developer workflow. For every major language and ecosystem, we provide a tiered "Adventure" map:
+> You like writing code. This is a map of the routes you can take through that —
+> each one changes what your code can survive, and a little of who you are as
+> the person who wrote it.
 
-1.  **Level 1: The Drop-in (Low Effort)** - Immediate speed/space gains with zero code changes.
-2.  **Level 2: The Modern Monolith (Medium Effort)** - Consolidate fragmented tools into one fast engine.
-3.  **Level 3: The Paradigm Shift (High Effort)** - The "clean break" to the future state of the ecosystem.
-4.  **Level 4: The Diplomat (Future-Proof)** - Interoperability layers that bridge the gaps between modern tools.
+`cyo` is a choose-your-own-adventure for your craft. It is **not** a ranking of
+tools, and there are no "levels" — nothing here says you are on a low rung and
+should climb. Every route is a peer choice. You are already a coder who enjoys
+this; the question is only *which adventure you feel like having next*, and what
+you want your code to be able to withstand when it does.
 
-## Supported Adventures
-To explore an adventure, run:
-```bash
-./cyo.sh <language>
+A route is worth taking when something genuinely nags at you, or when you want
+to grow in a particular direction — not because a list told you your stack was
+wrong. Your stack got you here. These are the next doors, not a verdict on the
+last one.
+
+## Pick a route
+
+```sh
+./cyo.sh <route>
 ```
 
-- [JavaScript / TypeScript (Runtime/Tooling)](./modules/js.md)
-- [Scripting Ecosystems (Languages/FFI)](./modules/scripts.md)
-- [Python](./modules/python.md)
-- [Rust](./modules/rust.md)
-- [SPARK / Ada](./modules/spark.md)
-- [C / C++ / C#](./modules/cpp.md)
-- [Git & Workflow](./modules/git.md)
-- [Logic & Neuro-Symbolic (NeSy)](./modules/logic.md)
-- [Language Fatigue & Fragmentation](./modules/fatigue.md)
+| Route | The adventure |
+| :--- | :--- |
+| [`scripts`](./modules/scripts.adoc) | The Federation — keep your dialect, share a proven core |
+| [`js`](./modules/js.adoc) | Faster feet for the JavaScript/TypeScript world |
+| [`python`](./modules/python.adoc) | Provisioning a clean Python expedition |
+| [`rust`](./modules/rust.adoc) | Sharpening an already-sharp blade |
+| [`spark`](./modules/spark.adoc) | The Paladin — oaths and an aegis of proof |
+| [`logic`](./modules/logic.adoc) | Wizardry — relational magic and neuro-symbolic study |
+| [`cpp`](./modules/cpp.adoc) | The Artificer — reforging the C/C++ toolchain |
+| [`git`](./modules/git.adoc) | The Chronicler — mastering your own history |
+| [`fatigue`](./modules/fatigue.adoc) | The long quest — growing without betraying your guild |
 
-## The Three Barriers to Evolution
-`cyo` isn't just a list of tools; it's a project to break through the three psychological walls that keep us stuck in sub-optimal workflows:
+Each chapter ends by pointing at the chapters it opens onto. Wander.
 
-1.  **The Information Gap:** Many developers haven't seen what true type-safety or formal proof looks like. We illustrate the "What?!" factor—showing you the powers you didn't know you were missing.
-2.  **The Social Anchor:** Admitting your current stack is "annoying" feels like admitting you were wrong. `cyo` respects your history. We provide "Faces" and "Drop-ins" so you can upgrade your tech without betraying your community.
-3.  **The Gimmick Filter:** New languages often feel like passing fads. We focus on **Stable Cores** and **Federated Interop**. When you pick a "Face" in `cyo`, you aren't gambling your career on a gimmick; you're joining a multi-lingual ecosystem built on top of mathematically proven foundations.
+## What every route shares
 
-## Manifesto
-- **Annoyance-Driven Development:** If a workflow makes you sigh, roll your eyes, or wait more than 10 seconds, it's a candidate for `cyo`.
-- **Fight the Status Quo:** Just because "everyone uses C/C++" doesn't mean it's the best tool for *your* project.
-- **Stability in the Core, Freedom in the Face:** We believe in a stable, proven engine with autonomous, community-led syntactic skins.
-- **Respect the Friction:** We acknowledge the pain of migration and provide paths that fit your risk tolerance.
+- **You enjoy the craft.** Nothing here is framed as escaping something bad.
+- **Identity over hierarchy.** A route is an aspect of who you want to be as a
+  builder, not a tier you have or haven't reached.
+- **Battle-ready is the destination.** Every chapter is honest about *what your
+  code can now survive* — scale, adversaries, time, regulation — and about what
+  the route costs and how reversible it is.
+- **No fads sold as fixes.** Where a route involves something young, it says so.
 
----
-*Created with ❤️ by the community.*
+See [`PHILOSOPHY.adoc`](./PHILOSOPHY.adoc) for the reasoning behind the map.

@@ -1,0 +1,58 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Route: The Artificer (C / C++)
+
+[.lead]
+_You work in C or C++ and the language is not the thing wearing you down — the
+toolchain is._
+
+This is the Artificer's route: you do not throw away the blade, you reforge the
+tools that maintain it. (C# is a different world — a managed runtime with its
+own, unrelated friction — so it gets its own future chapter rather than being
+bundled here as if the problems were the same.)
+
+== If reading the work nags you: clearer instruments
+
+* https://github.com/dandavison/delta[delta] turns diffs into something you can
+  actually read at a glance.
+* https://clangd.llvm.org/[clangd] gives a real language server over even old,
+  crufty codebases.
+
+Survives: onboarding to a legacy codebase without flying blind. Reversible
+instantly — these are read-side tools.
+
+== If cross-compiling nags you: zig cc
+
+https://ziglang.org/[Zig] ships a C/C++ compiler frontend. Swap `gcc`/`clang`
+for `zig cc` and you get hermetic, zero-config cross-compilation to most
+OS/arch targets — without touching a line of your C/C++.
+
+* Survives: shipping the same source to a platform you do not own a machine for.
+* This is the Artificer's quiet move: a new capability with no rewrite and an
+  easy retreat.
+
+== If the build system nags you: build.zig
+
+`CMake` and `MSBuild` are their own dialects to maintain. Driving a C/C++ build
+from https://ziglang.org/[Zig]'s build system lets you write build logic in a
+real language with real control flow.
+
+* Survives: a build description a new contributor can read without learning a
+  bespoke macro language. Cost: porting an existing build is genuine work.
+
+== If you are starting fresh: a new blade
+
+For a *new* component you would otherwise default to C++ out of habit, Zig
+itself is worth the adventure: no hidden control flow, no preprocessor, no
+template metaprogramming maze, a single small binary.
+
+* Cost, stated plainly: Zig is pre-1.0. The language can still change under you.
+  Take this path for components you are willing to maintain through that, not
+  for the thing the regulator signs off.
+
+== This route opens onto
+
+* `spark` — the Paladin, when the C/C++ shell wraps a core that must be proven.
+* `rust` — if memory safety by default, not just better tooling, is the real
+  want.
+* `git` — the Chronicler, to tame the history of a long-lived native codebase.

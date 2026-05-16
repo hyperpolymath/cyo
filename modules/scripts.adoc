@@ -1,0 +1,58 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Route: The Federation (Typed Scripting)
+
+[.lead]
+_You want stronger guarantees without leaving the people you build with._
+
+This is the route for the part of you that loves your scripting community and
+refuses to be told that growing up means emigrating. The Federation's promise:
+keep your dialect, gain a proven core.
+
+== The tongue you already speak: TypeScript
+
+You almost certainly already speak https://www.typescriptlang.org/[TypeScript].
+It is the common tongue of this world, and that is a real strength — vast
+ecosystem, gradual adoption. Be clear-eyed about its one trade: its type system
+is deliberately *unsound* so it can describe any JavaScript. The types help you;
+they can also lie to you when you need them most.
+
+That single fact is the door this route walks through. If "my types can lie to
+me" never bites you, you may not need to take this route at all — and that is a
+legitimate choice, not a failure.
+
+== Roads you could take, named honestly
+
+* https://rescript-lang.org/[ReScript] — fast, sound, OCaml-lineage. A fine
+  language; it is not this estate's chosen road, and `cyo` will not pretend a
+  preference is a verdict on yours.
+* https://www.purescript.org/[PureScript] — Haskell-for-the-web, maximal purity,
+  steep climb.
+
+These are real options. They are listed so the map is honest, not to rank you.
+
+== The Federation itself: AffineScript
+
+https://github.com/hyperpolymath/affinescriptiser[AffineScript] is this estate's
+route, and the reason is specific rather than tribal:
+
+* You keep writing in your community's *face* — the dialect it already lives in.
+* The face lowers to a shared core of **affine and dependent types** targeting
+  **typed-WASM**.
+* "Affine" means a resource is used *at most once*, tracked by the type system —
+  the guarantee none of the alternatives above make.
+
+What your code can now survive: components written by different teams, in
+different faces, interoperating on a WASM backend with resource-use guarantees
+that hold *across* the boundary — not just inside each silo.
+
+Cost: it is a younger ecosystem than TypeScript; you are an early citizen, not a
+late tourist. Reversibility: high at the edges (faces compile out), lower the
+more core logic you express in affine terms — which is the point of expressing
+it there.
+
+== This route opens onto
+
+* `js` — faster feet for the runtime your faces still execute on.
+* `fatigue` — the long quest, if what actually nags you is the treadmill itself.
+* `logic` — wizardry, when the shared core's job is to *reason*, not just run.

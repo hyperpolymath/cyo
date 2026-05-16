@@ -1,0 +1,8 @@
+SPDX-License-Identifier: MPL-2.0
+SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+
+This project is licensed under the Mozilla Public License 2.0.
+
+The full license text is in `LICENSES/MPL-2.0.txt`. Per-file provenance is
+declared with SPDX headers, following the REUSE specification
+(https://reuse.software/).

@@ -1,40 +1,43 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# cyo.sh — Choose Your Own. A terminal reader for the route chapters.
+set -euo pipefail
 
-# cyo.sh - Choose Your Own Adventure (Modern Tooling)
-# A simple terminal-first guide explorer.
+MODULES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/modules"
 
-MODULES_DIR="./modules"
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m' # No Color
+RED=$'\033[0;31m'; BOLD=$'\033[1m'; NC=$'\033[0m'
 
-function show_usage() {
-    echo -e "${BOLD}Usage:${NC} ./cyo.sh <language>"
-    echo -e "${BOLD}Available Adventures:${NC}"
-    ls $MODULES_DIR | sed 's/\.md//' | awk '{print "  - " $1}'
+show_usage() {
+    printf '%sUsage:%s ./cyo.sh <route>\n' "$BOLD" "$NC"
+    printf '%sRoutes:%s\n' "$BOLD" "$NC"
+    for f in "$MODULES_DIR"/*.adoc; do
+        printf '  - %s\n' "$(basename "$f" .adoc)"
+    done
 }
 
-if [ -z "$1" ]; then
+if [ $# -eq 0 ] || [ -z "${1:-}" ]; then
     show_usage
     exit 1
 fi
 
-LANG_FILE="$MODULES_DIR/$1.md"
+ROUTE_FILE="$MODULES_DIR/$1.adoc"
 
-if [ ! -f "$LANG_FILE" ]; then
-    echo -e "${RED}Error:${NC} Adventure for '$1' not found."
+if [ ! -f "$ROUTE_FILE" ]; then
+    printf '%sNo such route:%s %s\n\n' "$RED" "$NC" "$1"
     show_usage
     exit 1
 fi
 
-# If 'bat' is installed, use it for beautiful rendering
-if command -v bat &> /dev/null; then
-    bat --style=plain --language=markdown "$LANG_FILE"
-elif command -v batcat &> /dev/null; then
-    batcat --style=plain --language=markdown "$LANG_FILE"
+# Prefer a real AsciiDoc renderer; degrade gracefully.
+if command -v asciidoctor >/dev/null 2>&1 && command -v less >/dev/null 2>&1; then
+    asciidoctor -b manpage -o - "$ROUTE_FILE" 2>/dev/null | man -l - 2>/dev/null && exit 0
+fi
+if command -v bat >/dev/null 2>&1; then
+    bat --style=plain --language=asciidoc "$ROUTE_FILE"
+elif command -v batcat >/dev/null 2>&1; then
+    batcat --style=plain --language=asciidoc "$ROUTE_FILE"
 else
-    # Fallback to plain cat with some basic bolding for headers
-    cat "$LANG_FILE"
+    cat "$ROUTE_FILE"
 fi

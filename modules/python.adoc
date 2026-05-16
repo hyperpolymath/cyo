@@ -1,0 +1,52 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Route: Provisioning the Expedition (Python)
+
+[.lead]
+_You like Python. You just want the supply train to stop being the adventure._
+
+This is the quartermaster's route. Python is a fine place to live; what wears you
+down is environments, resolution speed, and PEP 668 turning a global install
+into a system hazard. You are not fixing Python — you are packing properly so the
+expedition runs on the actual work.
+
+== The supply pouch: pipx
+
+For installing Python *applications* (not libraries) without them colliding with
+your system interpreter, https://github.com/pypa/pipx[pipx] gives each one its
+own isolated environment automatically.
+
+* Take it: `sudo apt install pipx && pipx ensurepath` (or your platform's
+  equivalent).
+* Survives: PEP 668 — your OS interpreter stays untouched. Trivially reversible.
+
+== The quartermaster: uv
+
+https://github.com/astral-sh/uv[uv] is a single Rust-built tool that subsumes
+the job of pip, virtualenv, and pip-tools, and resolves an order of magnitude
+faster than the stack it replaces.
+
+* Take it: `curl -LsSf https://astral.sh/uv/install.sh | sh`.
+* Survives: a cold checkout on a teammate's machine resolving and syncing in
+  seconds, deterministically, from a lockfile. Cost: one new tool to learn.
+  Reversible: it still produces standard virtual environments underneath.
+
+(`uv` now also covers the version-and-project management that older tools like
+`rye` were built for; `rye` itself has been folded toward `uv`. One
+quartermaster is enough — there is no need to also carry the tool it replaced.)
+
+== The trailguide: mise
+
+If you switch between projects pinning *different* Python versions — and other
+runtimes besides — https://mise.jdx.dev/[mise] activates the right toolchain
+automatically as you `cd` in.
+
+* Survives: returning to a year-old project and it still building on the version
+  it was written for, without you remembering which that was.
+
+== This route opens onto
+
+* `logic` — wizardry, since most neuro-symbolic stacks are provisioned here.
+* `rust` — many of the tools above are Rust under the hood; you may want to
+  follow that thread.
+* `scripts` — the Federation, if dynamic typing is the thing that actually bites.

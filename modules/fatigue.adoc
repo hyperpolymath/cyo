@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Route: The Long Quest (Fatigue & Fragmentation)
+
+[.lead]
+_You do not actually hate any one tool. You are tired of being told that
+growing means starting over._
+
+This is the meta-route, and the honest one. The exhaustion is not "this linker
+is slow." It is the recurring demand that to gain something — safety, proof,
+speed — you abandon your dialect, your libraries, and the guild you built them
+with. That demand is the real boss on this map.
+
+== The small wards, named honestly
+
+* *Transpilers* (Babel, esbuild) buy you new features on old runtimes. Relief,
+  not a cure — the fragmentation is still there underneath.
+* *Supersets and typed siblings* (TypeScript, and the roads in `scripts`)
+  improve safety but keep you bound to one ecosystem's fate.
+* *A universal target* (WebAssembly) lets many languages run anywhere — but you
+  still pick one language to *write*, and inherit its world.
+
+These are listed plainly so the map does not oversell. Each is a real ward; none
+ends the quest.
+
+== The route that addresses the boss directly: the Federation
+
+The fatigue comes from coupling **identity** (the dialect and community you love)
+to **origin** (the guarantees your code can offer). Separate the two and the
+boss loses its grip:
+
+* Your community keeps its *face* — the dialect it already speaks and evolves.
+* Every face lowers to one shared core of **affine and dependent types**
+  targeting **typed-WASM** — see
+  https://github.com/hyperpolymath/affinescriptiser[AffineScript].
+* "Affine" = a resource used *at most once*, tracked by the type system. You
+  invest your logic once and it stays interoperable across every face.
+
+What you can now survive: the next "must-learn" cycle, without throwing away
+your expertise or your guild to take part in it. You grow without emigrating.
+
+Cost, stated plainly: it is a younger ecosystem; you arrive as an early citizen.
+The trade is deliberate — you spend some maturity-of-tooling to stop spending
+your identity.
+
+== This route opens onto
+
+* `scripts` — the Federation in concrete, runnable terms.
+* `logic` — wizardry, if the part worth preserving forever is the *reasoning*.
+* `git` — the Chronicler, when the fatigue is really process, not language.

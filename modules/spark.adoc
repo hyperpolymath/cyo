@@ -1,0 +1,61 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Route: The Paladin (SPARK / Ada)
+
+[.lead]
+_You want code that holds the line when everything is on fire._
+
+Choosing SPARK to harden your code is like choosing a paladin to fight. Not the
+flashiest class, but the one that swears an oath, carries an aegis, and does not
+break formation. Where most safety stops at "the borrow checker says this is
+fine," the paladin can *prove* that an entire category of failure cannot happen
+on this code path. That is the adventure on this route: trading some freedom of
+movement for an unbreakable guarantee.
+
+== The oath: contracts
+
+You start by writing down what must always be true — preconditions,
+postconditions, type ranges, loop invariants — as part of the program itself,
+not as comments or hope.
+
+* https://www.adacore.com/about-spark[SPARK] is the verifiable subset of Ada.
+* Install a GNAT/SPARK toolchain via https://alire.ada.dev/[Alire]
+  (`alr toolchain --select`) or your distribution's GNAT packages.
+* `gnatprove` then discharges the proof obligations: it tries to *prove*, for
+  every path, that no run-time error occurs and that every contract holds.
+
+What your code can now survive: integer overflow, out-of-bounds indexing,
+division by zero, and broken invariants are not "tested for" — they are shown to
+be impossible for the proven units. A regulator can read that.
+
+Cost and reversibility: you write in a disciplined subset, and proof effort is
+real engineering time. It is highly reversible — SPARK is still Ada, so
+un-proven code keeps compiling and running while you decide how far to take it.
+
+== The qualified blade: Ferrocene
+
+If your battlefield is regulated — ISO 26262, DO-178C — and you would rather
+stay in Rust, https://ferrous-systems.com/ferrocene/[Ferrocene] is a
+safety-qualified Rust toolchain. Same language you know; the assurance paperwork
+already done.
+
+== The keep and the bailey: a proven core, a free shell
+
+You rarely need the whole castle proven. The pragmatic adventure:
+
+. Write the safety-critical *brain* in SPARK and prove it.
+. Expose it across a C ABI (`pragma Export (C, ...)`).
+. Let the *shell* — UI, networking, glue — be whatever language is fastest to
+  build in, calling the keep through that ABI (Rust via `bindgen`, C/C++
+  directly, Python via `ctypes`, Go via `cgo`).
+
+You get a mathematically sound heart with an ordinary, productive body around
+it. The line is held where it matters and nowhere it does not.
+
+== This route opens onto
+
+* `cpp` — the Artificer, if the shell around your keep is C/C++.
+* `rust` — if you want the borrow checker as your everyday discipline and SPARK
+  only for the crown jewels.
+* `logic` — wizardry, when the thing you need to be correct is a *search*, not a
+  procedure.

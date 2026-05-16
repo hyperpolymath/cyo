@@ -1,0 +1,21 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*~
+*.swp
+.idea/
+.vscode/
+
+# Build / render output
+/build/
+*.html
+*.pdf
+*.1
+
+# Nix / direnv
+result
+result-*
+.direnv/
+
+# Guix
+/.guix-profile

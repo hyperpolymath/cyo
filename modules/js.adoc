@@ -1,0 +1,54 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Route: Faster Feet (JavaScript / TypeScript)
+
+[.lead]
+_You enjoy shipping in JS. You just want the floor to stop being lava._
+
+This is the route for the part of you that likes the reach of the JavaScript
+world and only wants the friction underfoot to go away. Nothing here asks you to
+leave. These are three parallel paths; pick by what actually nags you, and ignore
+the rest with a clear conscience.
+
+== If disk and install time nag you: pnpm
+
+https://pnpm.io/[pnpm] content-addresses your dependencies and hard-links them
+from one global store, instead of recopying `node_modules` per project.
+
+* Take it: `corepack enable pnpm`.
+* Survives: dozens of projects sharing one machine without your disk quietly
+  filling. 100% Node-compatible; effectively zero code change; trivially
+  reversible.
+
+== If the tool sprawl nags you: bun
+
+https://bun.sh/[Bun] is a single Zig-built binary that is runtime, package
+manager, test runner, and bundler at once.
+
+* Take it: `curl -fsSL https://bun.sh/install | bash`.
+* Survives: an onboarding doc that is one line instead of five tools. Cost: it
+  is younger than Node and a few corners are still being filled in — verify your
+  hot paths. Reversible: it speaks Node's APIs, so backing out is realistic.
+
+== If the model itself nags you: Deno
+
+https://deno.com/[Deno] rethinks the foundation — permissions off by default, no
+`node_modules`, TypeScript and a toolchain built in.
+
+* Take it: `curl -fsSL https://deno.land/x/install/install.sh | sh`.
+* Survives: a supply-chain review, because nothing reaches the network or disk
+  unless you granted it. Cost: it is a genuine paradigm change, not a swap;
+  treat it as a deliberate adventure, not a quick win.
+
+== The Federation entrance
+
+If what nags you is not speed but that your *types can lie*, you are not on this
+route at all — you are at the door of `scripts` (the Federation). Walk there
+instead.
+
+== This route opens onto
+
+* `scripts` — the Federation, when you want guarantees, not just velocity.
+* `git` — the Chronicler, since faster feet make a faster, messier history worth
+  taming.
+* `fatigue` — the long quest, if the real fatigue is the churn, not the tools.

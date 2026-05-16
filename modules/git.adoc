@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Route: The Chronicler (Git & Workflow)
+
+[.lead]
+_You are not bad at git. Git's interface is just bad at you._
+
+This is the Chronicler's route: the work is good, the record of the work is
+where the friction lives. You are not relearning version control; you are
+getting better instruments for the history you already make.
+
+== If reading history nags you: clearer sight
+
+* https://github.com/dandavison/delta[delta] renders diffs and blame as
+  something you can actually read.
+* https://cli.github.com/[gh] keeps pull requests, issues, and releases under
+  your fingers instead of behind a browser context-switch.
+
+Survives: a review done without leaving the terminal. Read-side; reverse anytime.
+
+== If staging and rebasing nag you: the war table
+
+https://github.com/jesseduffield/lazygit[lazygit] is a fast terminal UI where
+staging a hunk, reordering commits, or resolving a conflict is a keystroke, not
+a remembered incantation.
+
+* Survives: shaping a messy branch into a reviewable story without fear of the
+  interactive-rebase editor. Reversible: it is a front-end over plain git.
+
+== If the model itself nags you: the time-mage
+
+https://github.com/jj-vcs/jj[Jujutsu (jj)] is a Git-compatible VCS with a
+calmer model: no separate staging step, conflicts recorded *in* history rather
+than blocking you, and every operation undoable from an operation log.
+
+* Survives: a botched rebase at the worst possible moment — you simply walk it
+  back. Cost: a new mental model (a worthwhile adventure, not a free swap).
+  Reversible: the repo stays a normal git repo; colleagues need not even know.
+
+== This route opens onto
+
+* `fatigue` — the long quest, if what actually drains you is process, not tools.
+* Any language route — the Chronicler pairs with all of them; a faster build
+  (`rust`, `js`) is worth more when its history stays legible.

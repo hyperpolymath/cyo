@@ -1,40 +1,72 @@
-= The Federated Soul: The Philosophy of AffineScript
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= cyo: On Routes, Identity, and Battle-Ready Code
 :author: hyperpolymath
 :revdate: 2026-05-16
 :toc:
 
 [quote]
-"Stable in the Core, Free in the Face."
+You are not behind. You are at a crossroads, and crossroads are good.
 
-== The Problem: The Great Language Fatigue
-The modern developer lives in a state of perpetual "Annoyance." We are forced into a cycle of destruction: to gain better technology, we are told we must kill our identity. To get memory safety, we must leave Python. To get formal proof, we must leave JavaScript. This is the **Social Anchor**—the fear that choosing a new tool means betraying our community and our "mother tongue."
+== Why this exists
 
-== The Solution: The Federated Architecture
-AffineScript is not a language; it is a **Federation**. It is designed as a "High-Integrity Hybrid" that respects the three pillars of developer psychology:
+Most tooling advice is written as a deficit list: your stack is "infamous,"
+"notoriously complex," a "fragmented mess," and here is the ladder out. That
+framing is both wrong and counterproductive. It is wrong because you got real
+work done with that stack. It is counterproductive because nobody adopts a tool
+they were shamed into.
 
-=== 1. The Face (The Language of Creation)
-Your **Face** is your identity. Whether it is *JaffaScript*, *RattleScript*, or *LucidScript*, it is designed to feel like your "mother tongue."
-* **Autonomy:** Each community owns its Face. They evolve it, sugar it, and live in it.
-* **Identity:** You are not a "user of a dialect"; you are a citizen of a sovereign syntactic Republic.
+`cyo` starts from the opposite premise: you *enjoy* writing code. Given that,
+the interesting question is not "what is wrong with you" but "what adventure do
+you want next, and what do you want your code to be able to survive afterwards."
 
-=== 2. The Exo (The Language of Interconnection)
-The **Exolanguage** (`.affinex`) is the shared "Universal Common Tongue." It is the **Shared Origin** that unifies the federation.
-* **Exchange:** It is the "diplomatic passport" of code.
-* **Legibility:** Even if you don't speak the "Face" of your neighbor, you can read their "Exo" and understand their logic perfectly. It is the "Soviet Origin" that provides a readable, intuitive foundation for everyone.
+== Routes, not levels
 
-=== 3. The Core (The Language of Proof)
-The **Core** is the stable, industrial engine. It is the "Common Good" that remains largely untouched, governed by the federation, providing:
-* **Mathematical Proof:** Powered by Idris2.
-* **Resource Integrity:** Affine types (at most once) tracked with mathematical rigor.
-* **Stability:** While the Faces innovate and the Exo bridges, the Core remains the bedrock.
+There are deliberately no numbered levels. A numbered ladder encodes a
+hierarchy — rung one is the beginner's shame, rung four is the enlightened — and
+that hierarchy is exactly what alienates working developers from otherwise good
+advice.
 
-== The "At Most Once" Irony
-The name **AffineScript** is our ironic manifesto. In an industry that constantly "double-spends" developer time by forcing rewrites, we believe in a system where you invest in your logic **exactly once**, and it remains interoperable across every "Face" we build.
+A route is a lateral choice. Each one is a peer of the others. Each reflects an
+aspect of identity:
 
-== Our Ethics: Emancipation over Assimilation
-We do not seek to "convert" developers. We seek to **emancipate** them.
-* We acknowledge that **typing matters** (The Information Gap).
-* We acknowledge that **community matters** (The Social Anchor).
-* We acknowledge that **stability matters** (The Gimmick Filter).
+* the part of you that wants speed and a tight feedback loop,
+* the part that wants proof and an unbroken oath,
+* the part that wants to keep your community and your dialect,
+* the part that just wants to learn something with wonder in it.
 
-By separating Identity (Face) from Origin (Core), we create a "Lossless Federation" where you lose nothing but your annoyances.
+You pick the route that fits the player you are this season. Next season you may
+pick another. Nothing is foreclosed.
+
+== Battle-ready as the destination
+
+Every chapter is honest about one thing: *what can your code now survive that it
+could not before?* Production load. A hostile input. A decade of maintenance. A
+safety regulator. A teammate who does not know your invariants.
+
+"Battle-ready" is not a vibe. It is a concrete property gained, stated plainly,
+alongside the concrete cost and how hard the route is to walk back. An adventure
+with no stated stakes is a sales pitch, not a choice.
+
+== A note on the Federation
+
+Several routes lead toward
+https://github.com/hyperpolymath/affinescriptiser[AffineScript]. The idea is
+simple and is described without metaphor here so it cannot be misread:
+
+* You keep writing in the dialect your community already speaks — your *face*.
+* That dialect lowers to a shared, stable core of affine and dependent types.
+* The core targets typed-WASM, so components written in different faces
+  interoperate with resource guarantees intact.
+
+"Affine" means a resource is used *at most once*; the type system tracks that.
+The point is emancipation, not conversion: you grow your code's guarantees
+without abandoning the people you build with. That is the whole of it. No
+states, no republics, no allegory.
+
+== The contract this file makes with you
+
+. No route is sold by making you feel bad about where you are.
+. No claim is made that cannot be checked.
+. Every route states its cost and its reversibility.
+. You enjoy this. The map respects that you enjoy this.
