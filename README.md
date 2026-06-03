@@ -1,9 +1,10 @@
 <!--
 SPDX-License-Identifier: MPL-2.0
-SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 -->
-
 # `cyo` — Choose Your Own
+[![OpenSSF Best Practices](https://img.shields.io/badge/OpenSSF-Best_Practices-green?logo=openssourcesecurity)](https://www.bestpractices.dev/en/projects/new?repo_url=https://github.com/hyperpolymath/cyo)
+
 
 > You like writing code. This is a map of the routes you can take through that —
 > each one changes what your code can survive, and a little of who you are as
