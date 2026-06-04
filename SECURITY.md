@@ -1,8 +1,7 @@
 <!--
 SPDX-License-Identifier: MPL-2.0
-SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 -->
-
 # Security Policy
 
 `cyo` is documentation plus two small POSIX shell scripts (`cyo.sh`,
