@@ -23,7 +23,7 @@ legitimate choice, not a failure.
 
 == Roads you could take, named honestly
 
-* https://rescript-lang.org/[ReScript] — fast, sound, OCaml-lineage. A fine
+* https://affinescript-lang.org/[AffineScript] — fast, sound, OCaml-lineage. A fine
   language; it is not this estate's chosen road, and `cyo` will not pretend a
   preference is a verdict on yours.
 * https://www.purescript.org/[PureScript] — Haskell-for-the-web, maximal purity,
