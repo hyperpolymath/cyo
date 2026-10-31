@@ -173,15 +173,23 @@ while IFS=$'\x1f' read -r key ref commit has_uses; do
       echo "INVALID $key: literal-SHA key disagrees with the recorded commit ($commit)"
       FAIL=1
     fi
-    if [ "$is_reusable" -eq 0 ] && printf '%s' "$ref" | grep -qE '^[0-9a-fA-F]{40}$'; then
-      # The measured startup-fatal shape. GitHub's runner rejects it with
-      # "invalid lockfile pin" before any job exists.
+    if printf '%s' "$ref" | grep -qE '^[0-9a-fA-F]{40}$'; then
       if [ "$ref" = "$suffix" ]; then
-        echo "INVALID $key: ref repeats the pin's own SHA; a leaf entry must name the reviewed tag/branch (invalid lockfile pin at runner setup)"
-      else
+        if [ "$is_reusable" -eq 0 ]; then
+          # The measured startup-fatal shape. GitHub's runner rejects it with
+          # "invalid lockfile pin" before any job exists.
+          echo "INVALID $key: ref repeats the pin's own SHA; a leaf entry must name the reviewed tag/branch (invalid lockfile pin at runner setup)"
+          FAIL=1
+        fi
+      elif [ "$is_reusable" -eq 0 ]; then
         echo "INVALID $key: ref is a 40-hex SHA that is not the pin; a leaf entry must name the reviewed tag/branch"
+        FAIL=1
+      else
+        # A reusable record may pin by SHA, but the ref and the key must name
+        # the same commit; otherwise the record describes two different pins.
+        echo "INVALID $key: ref is a 40-hex SHA that disagrees with the record key"
+        FAIL=1
       fi
-      FAIL=1
     fi
   else
     # Tag-keyed record (e.g. 'actions/setup-python@v2'). The key IS the ref the
@@ -197,9 +205,13 @@ if [ "$REMOTE" -eq 1 ] && [ "$FAIL" -eq 0 ]; then
   : > "$TMP/unverified"
   while IFS=$'\x1f' read -r key ref commit has_uses; do
     [ -n "$key" ] || continue
-    case "$ref" in
-      ""|[0-9a-fA-F][0-9a-fA-F]*) continue ;;
-    esac
+    # Skip only refs that carry no remote meaning here: empty, and the 40-hex
+    # SHA a record pins. (A glob such as [0-9a-fA-F][0-9a-fA-F]* would also
+    # swallow ordinary refs like 2.0.5 or 2026.1 and silently report them as
+    # verified, so the test is explicit.)
+    if [ -z "$ref" ] || printf '%s' "$ref" | grep -qE '^[0-9a-fA-F]{40}$'; then
+      continue
+    fi
     repo="${key%@*}"
     url="https://github.com/$repo.git"
     done_file="$TMP/remote.$(printf '%s' "$repo" | tr '/' '_')"

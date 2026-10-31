@@ -1,7 +1,8 @@
 # Guard governance lock pins and prove source provenance before a commit is pinnable
 
 Target: `metadatastician/standards`, branch `fix/lock-pin-provenance-guard`, based on
-`1725bebd3773ea25627479f813283abf1c497a85`. Apply with `git am patches/000*.patch`.
+`1725bebd3773ea25627479f813283abf1c497a85`. Apply with `git am patches/0001-*.patch patches/0002-*.patch` — **not** `patches/000*.patch`,
+which also selects the cover letter and stops `git am`.
 
 ## Summary
 
@@ -11,7 +12,7 @@ Target: `metadatastician/standards`, branch `fix/lock-pin-provenance-guard`, bas
   records may pin by SHA, `commit:` must be `sha1-<40 hex>` and agree with a SHA-shaped key,
   tag-keyed records must record their own key. Optional `--remote` resolves refs with
   `git ls-remote` (drift advisory, unresolvable ref fatal, unreadable remote `UNVERIFIED`).
-- Adds `scripts/tests/check-lock-pin-provenance-test.sh`, 18 fixture cases, including the exact
+- Adds `scripts/tests/check-lock-pin-provenance-test.sh`, 20 fixture cases, including the exact
   `fad242d` (fails) and `1725beb` (passes) record shapes.
 - Runs it inside the existing `lock-selfcheck` job — **same job, same check name**
   (`Lockfile self-consistency`), so no required context changes.
@@ -38,7 +39,7 @@ substitute for closure or provenance.
 | Corrected sources | `75bd599`, `333b06a`, `8d1a2aa`, `1725beb`: guard exit 0, in sync, closed |
 | Live consumer execution | hypatia 41196238803 / 41196138008 at `333b06a`: policy jobs execute |
 | Canary reproduction | cyo 41198958192 at `fad242d`: `startup_failure`, 0 jobs |
-| Test suite | 18/18 pass |
+| Test suite | 20/20 pass |
 
 ## Boundaries
 
@@ -63,7 +64,7 @@ reachable from the callee default branch). Every startup-valid commit is far fro
 
 ## Checklist
 
-- [x] Guard + tests added; 18/18 pass; `bash -n` clean.
+- [x] Guard + tests added; 20/20 pass; `bash -n` clean.
 - [x] Run against `main` (pass), `fad242d` (fail), and four corrected sources (pass).
 - [x] `check-lock-sync.sh` and `close-lock.sh --check` green on the target commit.
 - [x] Additive only; no check disabled or renamed; no admission broadening.

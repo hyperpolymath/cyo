@@ -2,12 +2,29 @@
 
 Source of the change: `metadatastician/standards`. Nothing here modifies a consumer repository.
 
+## Revision note
+
+*Revision 2 (2026-10-31, post-review).* The first revision was merged into `cyo` `main` as
+4764ac80 (PR #54). This revision closes the review findings:
+
+* `--remote` skipped any ref whose first two characters were hex (`2026.1`), and reported the record
+  as verified without resolving it. Fixed, with a regression case that fails on the old guard.
+* A reusable-workflow record could pin one commit in `ref:` and another in its key; now rejected.
+* `patches/000*.patch` also selected the cover letter and stopped `git am`; the documented command
+  names both patch files.
+* `prompts/1-standards.md` now fetches the artifacts (which live in `cyo`, not `standards`) and
+  checks out `FETCH_HEAD` after a bundle fetch, which does not integrate by itself.
+* `prompts/5-burble.md` creates the extraction directory and defines the scripts clone before use.
+
+The patch series in `patches/` is regenerated from these sources and re-verified: `git am` applies
+both commits on `1725bebd` and the suite passes at the applied state.
+
 ## What is in here
 
 | Path | What it is |
 | --- | --- |
 | `scripts/check-lock-pin-provenance.sh` | The guard: lock-record representation + optional ref provenance |
-| `scripts/tests/check-lock-pin-provenance-test.sh` | 18 fixture cases (18/18 pass) |
+| `scripts/tests/check-lock-pin-provenance-test.sh` | 20 fixture cases (20/20 pass) |
 | `docs/audit-2026-10-31-governance-startup-lock-repair.adoc` | Evidence, candidate matrix, migration, rollback |
 | `patches/0001…`, `patches/0002…` | The two commits, `git am`-ready on `1725bebd` |
 | `patches/fix-lock-pin-provenance-guard.bundle` | Same commits as a git bundle |

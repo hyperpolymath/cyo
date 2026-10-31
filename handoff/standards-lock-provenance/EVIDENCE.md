@@ -70,14 +70,17 @@ Remote provenance (`--remote` on main) reports exactly one drift:
 
 ```
 $ bash scripts/tests/check-lock-pin-provenance-test.sh
-check-lock-pin-provenance-test: 18 passed, 0 failed
+check-lock-pin-provenance-test: 20 passed, 0 failed
 ```
 
 Covers: historical self-SHA leaf (fail), corrected tag+commit (pass), non-pin SHA ref (fail), empty
 ref (fail), key/commit disagreement (fail), missing `sha1-` (fail), tag-keyed record with own key
 (pass) and with another tag (fail), reusable record pinned by SHA (pass) and by tag (pass), missing
 lock / unknown schema / empty population / no workflows (exit 2 = uninspected), and four `--remote`
-cases with a stubbed resolver (peel match, drift advisory, unresolvable ref, unreadable remote).
+cases with a stubbed resolver (peel match, drift advisory, unresolvable ref, unreadable remote),
+plus two added after review: a ref whose first two characters are hex (`2026.1`) must be examined
+rather than silently skipped, and a reusable record whose SHA `ref:` disagrees with its own key must
+be rejected. Both fail against the pre-fix guard and pass against this one.
 
 ## 5. Consumer pins, 2026-10-31
 
