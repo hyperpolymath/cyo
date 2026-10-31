@@ -1,0 +1,683 @@
+From 30a2082e6ee61d13210e5b5c3f6cea79a74350e4 Mon Sep 17 00:00:00 2001
+From: "Jonathan D.A. Jewell" <j.d.a.jewell@open.ac.uk>
+Date: Sat, 31 Oct 2026 16:06:53 +0000
+Subject: [PATCH 1/2] fix(lock): guard leaf pin representation and ref
+ provenance
+
+GitHub rejects a leaf actions.lock record whose ref repeats its own 40-hex pin at
+runner setup ("invalid lockfile pin") for every caller pinned to that commit.
+The repair for the class landed on main in f335165 (#1271) and cf8f912 (#1285);
+this adds the guard that fails on the shape before a commit becomes pinnable, for
+records a workflow uses and for records it does not.
+
+check-lock-pin-provenance.sh checks representation and, with --remote, ref
+provenance. It deliberately does NOT re-implement coverage (check-lock-sync.sh)
+or closure (close-lock.sh --check): a representation pass is not a statement
+that a commit is safe to pin. Exit 2 whenever inspection did not happen.
+
+Tests: 18 fixture cases, including the historical fad242d record shape (fails)
+and the corrected 1725beb shape (passes).
+---
+ ...-10-31-governance-startup-lock-repair.adoc | 197 ++++++++++++++
+ scripts/check-lock-pin-provenance.sh          | 243 ++++++++++++++++++
+ .../tests/check-lock-pin-provenance-test.sh   | 194 ++++++++++++++
+ 3 files changed, 634 insertions(+)
+ create mode 100644 docs/audits/audit-2026-10-31-governance-startup-lock-repair.adoc
+ create mode 100755 scripts/check-lock-pin-provenance.sh
+ create mode 100755 scripts/tests/check-lock-pin-provenance-test.sh
+
+diff --git a/docs/audits/audit-2026-10-31-governance-startup-lock-repair.adoc b/docs/audits/audit-2026-10-31-governance-startup-lock-repair.adoc
+new file mode 100644
+index 0000000..ffe083d
+--- /dev/null
++++ b/docs/audits/audit-2026-10-31-governance-startup-lock-repair.adoc
+@@ -0,0 +1,197 @@
++// SPDX-License-Identifier: CC-BY-SA-4.0
++// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
++= Governance startup-lock repair — audit, migration and rollback
++:toc: macro
++:toc-placement!:
++:toclevels: 3
++:icons: font
++
++toc::[]
++
++== Verdict in one paragraph
++
++A caller pinned to `metadatastician/standards` at `fad242d`
++(+fad242d35291de1898242d6737ba02b74a59a2f2+) is _not_ startup-valid, and no lock-only repair can
++make it so: the commit is immutable, and a repair commit on a side branch is not callable, because
++GitHub resolves a called reusable workflow only at a commit reachable from the callee's default
++branch. The record is *already repaired on `main`* (f335165 for nine leaf records, cf8f912 for the
++rest) — this change adds the guard, the measurements and the migration order, not a second fix.
++Every startup-valid commit is at least 452 commits of policy change away from the broken baseline,
++so "minimal repin" and "policy-neutral repin" both misdescribe what a consumer must do.
++
++== What actually failed
++
++The failure is at *runner setup*, before any governance step:
++
++[source,text]
++----
++Unable to resolve action `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1`:
++invalid lockfile pin. Run `gh actions-lock` to update the lockfile
++----
++
++[cols="2,1,2,3",options="header"]
++|===
++| Run | Date | Source pin | Result
++
++| hyperpolymath/cyo 37113819760 | 2026-10-03 | fad242d | *Ran*: 13 jobs success, `Actions lockfile verify` failed, 2 skipped
++| hyperpolymath/cyo 39007442235 | 2026-10-17 | fad242d | *14/14 jobs failed at "Set up job"*, annotation above
++| hyperpolymath/cyo 41198958192 | 2026-10-31 | fad242d | `startup_failure`, 0 jobs (canary)
++| hyperpolymath/hypatia 41196238803 / 41196138008 | 2026-10-31 | 333b06a | jobs execute policy steps (UUID v7 conformance, lockfile verify — success)
++|===
++
++The same pin started on 2026-10-03 and did not start on 2026-10-17. The source did not change; the
++platform's enforcement did. "It worked when we merged it" is therefore not evidence, and the check
++has to run per publish, not once.
++
++== Mechanism
++
++* GitHub validates the *callee* against the callee repository's own
++  `.github/workflows/actions.lock` **as it exists at the pinned commit**.
++* A **leaf** dependency record (an action) must name the reviewed tag/branch in `ref:`; a record
++  whose `ref:` repeats its own 40-hex pin is rejected at *Set up job*. The pin stays in the record
++  key and in `commit: sha1-<40 hex>`.
++* A **reusable-workflow** record (callee `owner/repo/.github/workflows/x.yml@<ref>`) pins by SHA:
++  its `ref:` *is* the pin, plus the union of the callee's external `uses:` under `uses:`.
++* Keys stay SHA-shaped; `relock-sha-keys.sh` re-keys tag-spelled entries and the tag goes in `ref:`.
++
++=== Measured state per candidate source
++
++Checks run with one tool version (`main`'s scripts) against each tree: representation
++(`scripts/check-lock-pin-provenance.sh`), coverage (`scripts/check-lock-sync.sh`), closure
++(`scripts/close-lock.sh --check`). Older trees ship older *versions* of these scripts whose flags
++differ; the tool version is held fixed deliberately.
++
++[cols="1,1,1,1,1,2",options="header"]
++|===
++| Commit | Date | Behind fad242d | Records | Representation | Coverage / closure
++
++| fad242d | 2026-09-07 | 0 | 22 | *10 leaf self-SHA refs* | *OUT OF SYNC* (`mirror.yml` → `hyperpolymath/standards@571cc734` unrecorded)
++| 75bd599 | 2026-10-19 | 454 | 26 | pass | in sync / closed
++| 333b06a | 2026-10-19 | 461 | 28 | pass | in sync / closed — live consumer proof (hypatia)
++| 8d1a2aa | 2026-10-29 | 519 | 30 | pass | in sync / closed
++| 1725beb | 2026-10-29 | 527 | 30 | pass | in sync / closed — current `main`
++|===
++
++`fad242d` fails two independent startup gates: the leaf representation above, and a coverage gap where
++`mirror.yml` calls a *different* standards commit that has no record at all. Repairing only
++`actions/checkout` — the record the runner names first, because it is every job's first step — would
++have surfaced the next nine.
++
++=== Consumer pins measured on 2026-10-31
++
++[cols="2,2,1,3",options="header"]
++|===
++| Repository | Pin | Ancestor of main | State
++
++| hyperpolymath/cyo | hyperpolymath/standards@fad242d | yes | *broken source, and cyo also returns 0 jobs for valid pins*
++| hyperpolymath/hypatia | metadatastician/standards@333b06a | yes | valid; jobs execute
++| hyperpolymath/gitbot-fleet | hyperpolymath/standards@75bd599 | yes | valid by measurement; not yet canaried in-repo
++| metadatastician/burble | hyperpolymath/standards@01c9b0c9 | yes | predates the fix — needs measurement
++|===
++
++== Source-resolution expression audit
++
++`${{ job.workflow_sha }}` *— supported, used correctly.* 15 checkout sites in
++`governance-reusable.yml` (workflow-staleness, uuid-v7/v8-conformance, allowlist-preflight,
++actions-policy-live, validate-hypatia-baseline, package-policy, quality, actions-lock-verify,
++trusted-base, licence-consistency, exemption-ratchet, debt-ratchet, js-runtimes-provision,
++js-runtimes). Available only inside a called reusable workflow, where it is the *callee's* commit.
++It is not `github.workflow_sha` (the caller's), and not `github.job_workflow_sha`, which does not
++exist. It is unavailable on GitHub Enterprise Server. Nothing here needs changing.
++
++`ref: main` *— one remaining floating helper checkout.* `changelog-reusable.yml:126` checks out
++`metadatastician/standards@main` to read the canonical `cliff.toml`. It is data, not executed code,
++but it is the only floating ref left in the reusables. Recommended as a separate PR (consumer-visible,
++needs its own canary): `ref: ${{ job.workflow_sha }}`. *Not changed here.*
++
++Hypatia HEAD clones *— pinned by input, HEAD opt-in.* `hypatia-ref` (default `adb2f41d…`),
++`panic-ref` (`410a8f82…`), `pons-ref` (`bca1ea28…`); anything not 40-hex is rejected, and
++`git ls-remote … HEAD` runs only when a caller explicitly passes `HEAD`. The clone is
++`fetch --depth 1 origin "$SHA"` plus a `rev-parse` assertion, so the resolved commit builds and keys
++the cache. Residual: `HEAD` remains a supported input for canary callers.
++
++Reusable-dep refs *— one drift, advisory.* `--remote` on `main` reports exactly one:
++`hyperpolymath/cicd-squabbler@1ab1507a… ref: main` now resolves to `193349090e…`. Drift is measured
++*not* to be startup-fatal (`333b06a` records `dtolnay/rust-toolchain@e2a55d2f… ref: v1`; `v1` now
++resolves to `683b588c…`, and hypatia's jobs at that pin start and run).
++
++== The repair in this change
++
++* `scripts/check-lock-pin-provenance.sh` — representation + provenance: leaf `ref:` must name a
++  tag/branch, reusable records may pin by SHA, `commit:` must be `sha1-<lower hex>` agreeing with a
++  SHA-shaped key, tag-keyed records must record their own key. `--remote` resolves refs with
++  `git ls-remote` (drift advisory, unresolvable ref fatal, unreadable remote `UNVERIFIED`).
++  Exit 2 whenever inspection did not happen.
++* `scripts/tests/check-lock-pin-provenance-test.sh` — 18 fixture cases, including the exact
++  `fad242d` and `1725beb` record shapes.
++* `.github/workflows/lock-selfcheck.yml` — one extra step, same job and check name, so the required
++  context `Lockfile self-consistency` also covers records no workflow uses.
++* This document.
++
++Deliberately not done: no change to `check-actions-lock-gate.sh`, no new required context, no
++allow-list widening, no de-pinning, no job disabled.
++
++== Consumer migration — the canary protocol
++
++A *canary* here means one small workflow, in the consumer repository, that calls the shared
++governance reusable at exactly the candidate commit and does nothing else, so the run answers one
++question: **does runner setup accept this source pin from this repository?** It is not a policy test;
++it is the check that must pass before a policy test can happen.
++
++. *Verify the source* (git objects only, no writes):
++  `bash scripts/check-lock-pin-provenance.sh .github/workflows/actions.lock` → exit 0;
++  `bash scripts/check-lock-sync.sh .github/workflows` → in sync;
++  `bash scripts/close-lock.sh --check .github/workflows/actions.lock` → closed;
++  `bash scripts/lock-selfcheck.sh <sha>` → SELF-CONSISTENT (needs mikefarah yq v4).
++. *Confirm reachability* — the SHA must be an ancestor of the callee default branch. Existence is not
++  reachability, and a branch-tip repair commit is never callable.
++. *Canary one consumer:* a workflow whose only job is
++  `uses: metadatastician/standards/.github/workflows/governance-reusable.yml@<candidate>` on a
++  scratch branch. **Pass = the run has jobs.** Zero jobs or `startup_failure` = stop, do not repin.
++. *Enumerate a known-good control* in the same run: a second canary at a pin that already executes
++  somewhere (e.g. `333b06a` in hypatia). If the control also returns zero jobs, the blocker is the
++  consumer, not the source.
++. *Acknowledge the policy delta*, then repin `uses:`.
++. *Re-verify:* every expected job present, `Actions lockfile verify` green, required contexts reporting.
++
++=== Policy delta: fad242d → 1725beb (527 commits, 72 workflow files, +8497/−847)
++
++* `governance-reusable.yml` 1445 → 1903 lines; jobs 15 → 19
++  (+`js-runtimes-provision`, +`js-runtimes`, +`uuid-v7-conformance`, +`uuid-v8-conformance`).
++* New inputs `runs-on`, `baseline-strict`, pinned `hypatia-ref`; new optional secret
++  `HYPATIA_SCAN_PAT`.
++* Coordinates `hyperpolymath/standards` → `metadatastician/standards`; lock schema `v0.0.2` → `v0.0.3`.
++* Lock records 22 → 30.
++
++The same caution applies to every candidate: `75bd599` is 454 commits from the baseline. A repin to
++any valid commit is a policy upgrade; call it one.
++
++== Rollback
++
++*Consumer:* restore the previous `uses:` pin and push. If that pin is the broken one, governance
++reports _zero jobs_ and no required context arrives — a rollback to `fad242d` does not restore a gate,
++it removes one. To stay gated during a rollback, pin the last known-good SHA and re-run the canary.
++
++*Standards:* additive — one script, one test, one step, one document. Revert the merge; the required
++context name is unchanged, so no branch-protection surgery is needed.
++
++== Limits of this measurement
++
++* `gh actions-lock --verify-local` could not be run: the extension install fails downloading its
++  release asset (EOF). The three repo-owned checks above were run instead.
++* Mikefarah `yq` v4 is absent, so `lock-selfcheck.sh` was exercised as its three components.
++* Repository Administration settings are unreadable (`403`), the same blocker recorded in 8d1a2aa.
++* A consumer canary in `hyperpolymath/cyo` returned zero jobs for *every* pin tried, including
++  `333b06a`, which runs in hypatia today — a caller-side blocker in `cyo`, independent of this
++  defect and not diagnosable from here.
++* `hyperpolymath/cicd-squabbler@… ref: main` drift and `changelog-reusable.yml:126 ref: main` are
++  recorded as findings, not changed.
++
++== Coordination
++
++* *cyo:* fix its caller-side blocker first, then canary, then repin. A repin alone will not turn it green.
++* *Hypatia:* on `333b06a` and executing policy — the live evidence for that pin, and the natural first
++  canary for anything newer.
++* *gitbot-fleet / burble:* same matrix, canary in-repo before moving the pin.
++* *cicd-suite PR #66:* its representation guard is the sibling invariant, not a substitute for
++  coverage, closure or provenance.
+diff --git a/scripts/check-lock-pin-provenance.sh b/scripts/check-lock-pin-provenance.sh
+new file mode 100755
+index 0000000..aebe0e9
+--- /dev/null
++++ b/scripts/check-lock-pin-provenance.sh
+@@ -0,0 +1,243 @@
++#!/usr/bin/env bash
++# SPDX-License-Identifier: MPL-2.0
++# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
++#
++# check-lock-pin-provenance.sh — the REPRESENTATION and PROVENANCE layer of
++# actions.lock verification, for one lock plus the workflows beside it.
++#
++# ── Why this exists (measured, 2026-10-31) ──────────────────────────────────
++# GitHub resolves a called reusable workflow at workflow STARTUP and validates
++# the CALLEE against the callee repository's own `.github/workflows/actions.lock`
++# *as it exists at the pinned commit*. A leaf dependency record whose `ref`
++# repeats its own 40-hex pin is rejected there:
++#
++#   Unable to resolve action `actions/checkout@3d3c42e5…`:
++#   invalid lockfile pin. Run `gh actions-lock` to update the lockfile
++#
++#   hyperpolymath/cyo run 39007442235, 2026-10-17 — 14 of 14 jobs, step
++#   "Set up job", annotation naming the CALLEE's leaf record. The same
++#   immutable pin (metadatastician/standards fad242d) started those jobs on
++#   2026-10-03 (run 37113819760): the source did not change, enforcement did.
++#
++# The repair for that class landed on main in f335165 (#1271, tag refs for nine
++# leaf entries) and cf8f912 (#1285, the rest). This script is the guard that
++# keeps the class from shipping again, and it deliberately does NOT re-tell the
++# whole story:
++#
++#   * REPRESENTATION (this script, always): a leaf record must name the reviewed
++#     tag/branch in `ref:`; a reusable-workflow record may pin by SHA; every
++#     record must carry `commit: sha1-<40 hex>` agreeing with a SHA-shaped key.
++#   * COVERAGE and CLOSURE are NOT re-implemented here. They live in
++#     `check-lock-sync.sh` (both-direction workflow<->lock equality, job-level
++#     reusables and local composite actions included) and `close-lock.sh
++#     --check` (no dangling edges). `lock-selfcheck.sh` composes all three per
++#     commit. A representation pass here is NOT a statement that a commit is
++#     safe to pin.
++#   * REMOTE RESOLUTION (`--remote`) is opt-in and advisory on drift, because
++#     drift is measured NOT to be startup-fatal: metadatastician/standards
++#     333b06a records `dtolnay/rust-toolchain@e2a55d2f… ref: v1` while v1 now
++#     resolves to 683b588c…, and hypatia's governance jobs at that pin start and
++#     run (run 41196238803, 2026-10-31). A ref that does not resolve at all is a
++#     different matter and fails.
++#
++# Sibling: hyperpolymath/cicd-suite PR #66 (`scripts/check-lock-pin-contract.sh`)
++# carries the same representation rule for that repository. It is a
++# representation guard, not a lock/provenance/closure verifier; neither is this
++# script on its own.
++#
++# USAGE
++#   check-lock-pin-provenance.sh [LOCKFILE] [--remote]
++#       LOCKFILE   default .github/workflows/actions.lock
++#       --remote   also resolve tag/branch refs with `git ls-remote`
++#
++# EXIT
++#   0 = representation accepted (and, with --remote, every ref resolved)
++#   1 = at least one INVALID record
++#   2 = inspection NOT performed (no lock, unknown schema, empty population,
++#       no workflow files) — never reported as a pass
++#
++# Test seam: LOCK_RESOLVE_CMD, a command whose final word is the action repo URL
++# and whose earlier words are passed through; it must print `git ls-remote`
++# output. Defaults to `git ls-remote --tags --heads`.
++set -uo pipefail
++
++REMOTE=0
++LOCK=""
++for arg in "$@"; do
++  case "$arg" in
++    --remote) REMOTE=1 ;;
++    -h|--help) sed -n '2,60p' "$0"; exit 2 ;;
++    -*) echo "check-lock-pin-provenance: unknown option $arg" >&2; exit 2 ;;
++    *) LOCK="$arg" ;;
++  esac
++done
++LOCK="${LOCK:-.github/workflows/actions.lock}"
++WF_DIR="$(dirname "$LOCK")"
++RESOLVE_CMD="${LOCK_RESOLVE_CMD:-git ls-remote --tags --heads}"
++
++if [ ! -f "$LOCK" ]; then
++  echo "::error file=$LOCK::lockfile missing; nothing inspected, no assurance" >&2
++  exit 2
++fi
++
++shopt -s nullglob
++WORKFLOWS=("$WF_DIR"/*.yml "$WF_DIR"/*.yaml)
++shopt -u nullglob
++if [ "${#WORKFLOWS[@]}" -eq 0 ]; then
++  echo "::error file=$LOCK::no workflow files under $WF_DIR; the reusable/leaf distinction cannot be made, so no assurance" >&2
++  exit 2
++fi
++
++VERSION="$(awk -F"'" '/^version:/{print $2; exit}' "$LOCK")"
++case "$VERSION" in
++  v0.0.2|v0.0.3) ;;
++  "")
++    echo "::error file=$LOCK::no lockfile schema version; nothing inspected, no assurance" >&2
++    exit 2 ;;
++  *)
++    echo "::error file=$LOCK::untested lockfile schema '$VERSION'; refusing to report on a shape this guard was not built for" >&2
++    exit 2 ;;
++esac
++
++TMP="$(mktemp -d)"
++trap 'rm -rf "$TMP"' EXIT
++
++# ── Parse dependency records: key, ref, commit, and whether a `uses:` list
++#    follows (a reusable-workflow record carries one; a leaf usually does not).
++#    \\x1f separates fields: a ref is legitimately allowed to be empty, and an
++#    empty field must not swallow the next one.
++awk '
++  /^dependencies:/ { in_dep = 1; next }
++  /^[a-z_]+:/      { in_dep = 0; cur = ""; next }
++  !in_dep { next }
++  /^    \x27[^\x27]+\x27:$/ {
++    if (cur != "") print cur "\x1f" ref "\x1f" commit "\x1f" uses
++    cur = $0; sub(/^    \x27/, "", cur); sub(/\x27:$/, "", cur)
++    ref = ""; commit = ""; uses = 0
++    next
++  }
++  /^        ref: /    { r = $0; sub(/^        ref: /, "", r); gsub(/^\x27|\x27$/, "", r); ref = r; next }
++  /^        commit: / { c = $0; sub(/^        commit: /, "", c); gsub(/^\x27|\x27$/, "", c); commit = c; next }
++  /^        uses:/   { uses = 1; next }
++  END { if (cur != "") print cur "\x1f" ref "\x1f" commit "\x1f" uses }
++' "$LOCK" > "$TMP/records"
++
++if [ ! -s "$TMP/records" ]; then
++  echo "::error file=$LOCK::no dependency records inspected; no assurance" >&2
++  exit 2
++fi
++
++# ── Which owner/repo are called as REUSABLE WORKFLOWS anywhere in the tree?
++#    An anchored match on `uses:` (comments and `run:` bodies are not `uses:`
++#    lines); a quoted spelling matches too. This only CLASSIFIES a record, and a
++#    classification miss cannot turn a bad leaf into a pass.
++grep -rhoE '^[[:space:]]*-?[[:space:]]*uses:[[:space:]]*["'"'"']?[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/\.github/workflows/[^@[:space:]"'"'"']+@' \
++  "${WORKFLOWS[@]}" 2>/dev/null |
++  sed -E 's/.*uses:[[:space:]]*["'"'"']?//; s#/\.github/workflows/.*##' |
++  tr 'A-Z' 'a-z' | sort -u > "$TMP/reusable_repos" || : > "$TMP/reusable_repos"
++
++FAIL=0
++COUNT=0
++REUSABLE_COUNT=0
++
++while IFS=$'\x1f' read -r key ref commit has_uses; do
++  [ -n "$key" ] || continue
++  COUNT=$((COUNT + 1))
++  repo="${key%@*}"
++  suffix="${key##*@}"
++  repo_lc="$(printf '%s' "$repo" | tr 'A-Z' 'a-z')"
++  is_reusable=0
++  if grep -qxF "$repo_lc" "$TMP/reusable_repos" 2>/dev/null; then
++    is_reusable=1
++    REUSABLE_COUNT=$((REUSABLE_COUNT + 1))
++  fi
++  # NOT a fallback: a nested `uses:` list does NOT by itself make a record a
++  # reusable call. actions/upload-pages-artifact is a composite action that uses
++  # actions/upload-artifact and is written with a list, yet it is a leaf for the
++  # purposes of the runner's pin check. Measured on fad242d: treating "has a
++  # list" as "is a reusable" hid a real self-SHA leaf record from this guard.
++  # The workflow call site is the only signal.
++
++  if [ -z "$ref" ]; then
++    echo "INVALID $key: no ref recorded"
++    FAIL=1
++    continue
++  fi
++  if ! printf '%s' "$commit" | grep -qE '^sha1-[0-9a-f]{40}$'; then
++    echo "INVALID $key: commit must be sha1-<40 lowercase hex>, got '$commit'"
++    FAIL=1
++    continue
++  fi
++  if printf '%s' "$suffix" | grep -qE '^[0-9a-fA-F]{40}$'; then
++    if [ "$commit" != "sha1-$(printf '%s' "$suffix" | tr 'A-F' 'a-f')" ]; then
++      echo "INVALID $key: literal-SHA key disagrees with the recorded commit ($commit)"
++      FAIL=1
++    fi
++    if [ "$is_reusable" -eq 0 ] && printf '%s' "$ref" | grep -qE '^[0-9a-fA-F]{40}$'; then
++      # The measured startup-fatal shape. GitHub's runner rejects it with
++      # "invalid lockfile pin" before any job exists.
++      if [ "$ref" = "$suffix" ]; then
++        echo "INVALID $key: ref repeats the pin's own SHA; a leaf entry must name the reviewed tag/branch (invalid lockfile pin at runner setup)"
++      else
++        echo "INVALID $key: ref is a 40-hex SHA that is not the pin; a leaf entry must name the reviewed tag/branch"
++      fi
++      FAIL=1
++    fi
++  else
++    # Tag-keyed record (e.g. 'actions/setup-python@v2'). The key IS the ref the
++    # tool resolved; a differing ref would key one spelling and record another.
++    if [ "$ref" != "$suffix" ]; then
++      echo "INVALID $key: tag-shaped key recorded ref '$ref'; expected '$suffix'"
++      FAIL=1
++    fi
++  fi
++done < "$TMP/records"
++
++if [ "$REMOTE" -eq 1 ] && [ "$FAIL" -eq 0 ]; then
++  : > "$TMP/unverified"
++  while IFS=$'\x1f' read -r key ref commit has_uses; do
++    [ -n "$key" ] || continue
++    case "$ref" in
++      ""|[0-9a-fA-F][0-9a-fA-F]*) continue ;;
++    esac
++    repo="${key%@*}"
++    url="https://github.com/$repo.git"
++    done_file="$TMP/remote.$(printf '%s' "$repo" | tr '/' '_')"
++    if [ ! -s "$done_file" ]; then
++      # shellcheck disable=SC2086
++      $RESOLVE_CMD "$url" > "$done_file" 2>/dev/null
++      if [ ! -s "$done_file" ]; then
++        echo "UNVERIFIED $key: could not read remote refs for $repo (indeterminate, not a pass)"
++        echo "$key" >> "$TMP/unverified"
++        continue
++      fi
++    fi
++    want="$(printf '%s' "$commit" | sed 's/^sha1-//')"
++    got="$(awk -v want="$ref" '
++      $2 == "refs/tags/" want "^{}" { peel = $1 }
++      $2 == "refs/tags/" want        { tag = $1 }
++      $2 == "refs/heads/" want       { head = $1 }
++      END { if (peel != "") print peel; else if (tag != "") print tag; else print head }
++    ' "$done_file")"
++    if [ -z "$got" ]; then
++      echo "INVALID $key: ref '$ref' does not resolve in $repo"
++      FAIL=1
++    elif [ "$got" != "$want" ]; then
++      # Advisory only: measured NOT startup-fatal (333b06a / dtolnay v1).
++      echo "DRIFT $key: ref '$ref' now resolves to $got, not the recorded pin $want (advisory: drift is not startup-fatal; see the header)"
++    fi
++  done < "$TMP/records"
++fi
++
++echo "inspected $COUNT dependency record(s) in $LOCK (schema $VERSION); $REUSABLE_COUNT reusable-workflow record(s); representation failures=$FAIL"
++if [ -s "$TMP/unverified" ]; then
++  echo "records whose remote refs could not be read: $(wc -l < "$TMP/unverified") (reported UNVERIFIED above)"
++fi
++if [ "$FAIL" -ne 0 ]; then
++  echo "REPRESENTATION REJECTED — a lock carrying these records is not startup-valid for a caller pinned here."
++  echo "Repair: name the reviewed tag/branch in ref:, keep the pin in the key and commit:. See"
++  echo "  standards f335165 (#1271), cf8f912 (#1285); run scripts/relock-sha-keys.sh + close-lock.sh --check afterwards."
++  exit 1
++fi
++echo "Representation accepted. This is NOT coverage or closure: also run check-lock-sync.sh and close-lock.sh --check (lock-selfcheck.sh does all three per commit)."
++exit 0
+diff --git a/scripts/tests/check-lock-pin-provenance-test.sh b/scripts/tests/check-lock-pin-provenance-test.sh
+new file mode 100755
+index 0000000..7ed61b2
+--- /dev/null
++++ b/scripts/tests/check-lock-pin-provenance-test.sh
+@@ -0,0 +1,194 @@
++#!/usr/bin/env bash
++# SPDX-License-Identifier: MPL-2.0
++# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
++#
++# check-lock-pin-provenance-test.sh — fixture suite for
++# scripts/check-lock-pin-provenance.sh.
++#
++# The two cases that matter are transcribed from real sources:
++#   * metadatastician/standards fad242d35291de1898242d6737ba02b74a59a2f2 —
++#     leaf `ref:` repeating the pin's own SHA. Every cross-repo caller of the
++#     shared reusables died at runner setup ("invalid lockfile pin") from
++#     2026-10-17 (hyperpolymath/cyo run 39007442235).
++#   * metadatastician/standards 1725bebd3773ea25627479f813283abf1c497a85 —
++#     the same record corrected to `ref: v7.0.1`.
++# They are REPRESENTATIONS, not whole immutable snapshots: the guard's contract
++# is about the record's shape, and coverage/closure are other scripts' jobs.
++#
++# Run: bash scripts/tests/check-lock-pin-provenance-test.sh
++set -uo pipefail
++
++SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++GUARD="${GUARD:-$SCRIPT_DIR/../check-lock-pin-provenance.sh}"
++WORK="$(mktemp -d)"
++trap 'rm -rf "$WORK"' EXIT
++
++SHA=3d3c42e5aac5ba805825da76410c181273ba90b1
++OTHER=1111111111111111111111111111111111111111
++
++pass=0
++fail=0
++
++fresh() {
++  rm -rf "$WORK/repo"
++  mkdir -p "$WORK/repo/.github/workflows"
++  printf 'name: ci\non: push\njobs:\n  a:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@%s\n' "$SHA" \
++    > "$WORK/repo/.github/workflows/ci.yml"
++}
++
++lock() { cat > "$WORK/repo/.github/workflows/actions.lock"; }
++
++expect() {
++  local label=$1 want=$2 needle=${3:-} out rc
++  out="$(cd "$WORK/repo" && LOCK_RESOLVE_CMD="${RESOLVE:-false}" bash "$GUARD" .github/workflows/actions.lock 2>&1)"
++  rc=$?
++  if [ "$rc" != "$want" ]; then
++    printf 'FAIL %s: wanted exit %s, got %s\n%s\n' "$label" "$want" "$rc" "$out"
++    fail=$((fail + 1))
++    return
++  fi
++  if [ -n "$needle" ] && ! printf '%s' "$out" | grep -qF "$needle"; then
++    printf 'FAIL %s: output does not mention %s\n%s\n' "$label" "$needle" "$out"
++    fail=$((fail + 1))
++    return
++  fi
++  printf 'ok: %s\n' "$label"
++  pass=$((pass + 1))
++}
++
++leaf_record() { # leaf_record <ref> <commit>
++  printf "version: 'v0.0.3'\nworkflows:\n    '.github/workflows/ci.yml':\n        - 'actions/checkout@%s'\ndependencies:\n    'actions/checkout@%s':\n        ref: '%s'\n        commit: '%s'\n" \
++    "$SHA" "$SHA" "$1" "$2"
++}
++
++# ── representation ─────────────────────────────────────────────────────────
++
++fresh
++leaf_record "$SHA" "sha1-$SHA" | lock
++expect 'historical: leaf ref repeats the pin SHA (fad242d shape)' 1 'ref repeats the pin'
++
++fresh
++leaf_record "$OTHER" "sha1-$SHA" | lock
++expect 'leaf ref is a 40-hex SHA that is not the pin' 1 'ref is a 40-hex SHA that is not the pin'
++
++fresh
++leaf_record v7.0.1 "sha1-$SHA" | lock
++expect 'corrected: reviewed tag and matching commit (main shape)' 0 'Representation accepted'
++
++fresh
++leaf_record "" "sha1-$SHA" | lock
++expect 'empty ref rejected' 1 'no ref recorded'
++
++fresh
++leaf_record v7.0.1 "sha1-$OTHER" | lock
++expect 'literal-SHA key disagrees with the recorded commit' 1 'disagrees with the recorded commit'
++
++fresh
++leaf_record v7.0.1 "$SHA" | lock
++expect 'commit without the sha1- algorithm rejected' 1 'commit must be sha1-'
++
++fresh
++printf "version: 'v0.0.3'\nworkflows: {}\ndependencies:\n    'actions/setup-python@v2':\n        ref: 'v2'\n        commit: 'sha1-%s'\n" "$SHA" | lock
++expect 'tag-keyed record whose ref is its own key' 0 'Representation accepted'
++
++fresh
++printf "version: 'v0.0.3'\ndependencies:\n    'actions/setup-python@v2':\n        ref: 'v3'\n        commit: 'sha1-%s'\n" "$SHA" | lock
++expect 'tag-keyed record whose ref is a different tag' 1 'tag-shaped key'
++
++# ── reusable-workflow records ──────────────────────────────────────────────
++# A reusable call site is what licenses a SHA ref: the caller pins the callee's
++# commit, and close-lock.sh writes the callee's own `uses:` union under it.
++
++reusable_fixture() { # reusable_fixture <ref> <commit>
++  printf 'name: ci\non: push\njobs:\n  g:\n    uses: metadatastician/standards/.github/workflows/governance-reusable.yml@%s\n' "$SHA" \
++    > "$WORK/repo/.github/workflows/ci.yml"
++  printf "version: 'v0.0.3'\nworkflows:\n    '.github/workflows/ci.yml':\n        - 'metadatastician/standards@%s'\ndependencies:\n    'metadatastician/standards@%s':\n        ref: '%s'\n        commit: '%s'\n        uses:\n            - 'actions/checkout@%s'\n    'actions/checkout@%s':\n        ref: 'v7.0.1'\n        commit: 'sha1-%s'\n" \
++    "$SHA" "$SHA" "$1" "$2" "$SHA" "$SHA" "$SHA"
++}
++
++fresh
++reusable_fixture "$SHA" "sha1-$SHA" | lock
++expect 'reusable record may pin its ref by SHA' 0 'Representation accepted'
++
++fresh
++reusable_fixture v7.0.1 "sha1-$SHA" | lock
++expect 'reusable record with a tag ref is accepted (drift is a --remote question)' 0 'Representation accepted'
++
++# ── inspection-not-performed is never a pass ──────────────────────────────
++
++fresh
++expect 'missing lockfile' 2 'lockfile missing'
++
++fresh
++printf "version: 'v99'\ndependencies:\n    'actions/checkout@%s':\n        ref: 'v7.0.1'\n        commit: 'sha1-%s'\n" "$SHA" "$SHA" | lock
++expect 'unknown schema is uninspected, not clean' 2 'untested lockfile schema'
++
++fresh
++printf "version: 'v0.0.3'\ndependencies: {}\n" | lock
++expect 'empty population gives no assurance' 2 'no dependency records inspected'
++
++fresh
++rm -f "$WORK/repo/.github/workflows/ci.yml"
++leaf_record v7.0.1 "sha1-$SHA" | lock
++expect 'no workflow files beside the lock' 2 'no workflow files'
++
++# ── --remote (stubbed resolver; no network in this suite) ─────────────────
++
++# LOCK_RESOLVE_CMD is expanded into words: the earlier words are the command,
++# the final word is the repository URL. The stub therefore reads its mode first
++# and the URL last.
++stub() {
++  cat > "$WORK/resolve" <<STUB
++#!/usr/bin/env bash
++mode="\${1:-}"; url="\${2:-}"
++case "\$url" in
++  *actions/checkout*)
++    case "\$mode" in
++      pin)   printf '%s\trefs/tags/v7.0.1\n%s\trefs/tags/v7.0.1^{}\n' "$SHA" "$SHA" ;;
++      drift) printf '%s\trefs/tags/v7.0.1\n%s\trefs/tags/v7.0.1^{}\n' "$OTHER" "$OTHER" ;;
++      gone)  printf '%s\trefs/tags/v7.0.0\n' "$OTHER" ;;
++    esac ;;
++esac
++STUB
++  chmod +x "$WORK/resolve"
++}
++
++remote_case() { # remote_case <label> <mode|none> <want-rc> <needle>
++  local label=$1 mode=$2 want=$3 needle=$4 out rc cmd
++  if [ "$mode" = none ]; then cmd="false"; else cmd="$WORK/resolve $mode"; fi
++  out="$(cd "$WORK/repo" && LOCK_RESOLVE_CMD="$cmd" bash "$GUARD" .github/workflows/actions.lock --remote 2>&1)"
++  rc=$?
++  if [ "$rc" != "$want" ]; then
++    printf 'FAIL %s: wanted exit %s, got %s\n%s\n' "$label" "$want" "$rc" "$out"
++    fail=$((fail + 1))
++    return
++  fi
++  if [ -n "$needle" ] && ! printf '%s' "$out" | grep -qF "$needle"; then
++    printf 'FAIL %s: output does not mention %s\n%s\n' "$label" "$needle" "$out"
++    fail=$((fail + 1))
++    return
++  fi
++  printf 'ok: %s\n' "$label"
++  pass=$((pass + 1))
++}
++
++stub
++fresh
++leaf_record v7.0.1 "sha1-$SHA" | lock
++remote_case '--remote: tag peels to the recorded pin' pin 0 'Representation accepted'
++
++fresh
++leaf_record v7.0.1 "sha1-$SHA" | lock
++remote_case '--remote: drift is advisory, not startup-fatal' drift 0 'DRIFT actions/checkout'
++
++fresh
++leaf_record v9.9.9 "sha1-$SHA" | lock
++remote_case '--remote: a ref that does not resolve is invalid' gone 1 'does not resolve'
++
++fresh
++leaf_record v7.0.1 "sha1-$SHA" | lock
++remote_case '--remote: an unreadable remote is UNVERIFIED, never a silent pass' none 0 'UNVERIFIED actions/checkout'
++
++echo "------------------------------------------------------------"
++echo "check-lock-pin-provenance-test: ${pass} passed, ${fail} failed"
++[ "$fail" -eq 0 ] || exit 1
+-- 
+2.39.5
+

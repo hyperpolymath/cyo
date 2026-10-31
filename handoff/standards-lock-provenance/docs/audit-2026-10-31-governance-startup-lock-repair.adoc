@@ -1,0 +1,197 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Governance startup-lock repair — audit, migration and rollback
+:toc: macro
+:toc-placement!:
+:toclevels: 3
+:icons: font
+
+toc::[]
+
+== Verdict in one paragraph
+
+A caller pinned to `metadatastician/standards` at `fad242d`
+(+fad242d35291de1898242d6737ba02b74a59a2f2+) is _not_ startup-valid, and no lock-only repair can
+make it so: the commit is immutable, and a repair commit on a side branch is not callable, because
+GitHub resolves a called reusable workflow only at a commit reachable from the callee's default
+branch. The record is *already repaired on `main`* (f335165 for nine leaf records, cf8f912 for the
+rest) — this change adds the guard, the measurements and the migration order, not a second fix.
+Every startup-valid commit is at least 452 commits of policy change away from the broken baseline,
+so "minimal repin" and "policy-neutral repin" both misdescribe what a consumer must do.
+
+== What actually failed
+
+The failure is at *runner setup*, before any governance step:
+
+[source,text]
+----
+Unable to resolve action `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1`:
+invalid lockfile pin. Run `gh actions-lock` to update the lockfile
+----
+
+[cols="2,1,2,3",options="header"]
+|===
+| Run | Date | Source pin | Result
+
+| hyperpolymath/cyo 37113819760 | 2026-10-03 | fad242d | *Ran*: 13 jobs success, `Actions lockfile verify` failed, 2 skipped
+| hyperpolymath/cyo 39007442235 | 2026-10-17 | fad242d | *14/14 jobs failed at "Set up job"*, annotation above
+| hyperpolymath/cyo 41198958192 | 2026-10-31 | fad242d | `startup_failure`, 0 jobs (canary)
+| hyperpolymath/hypatia 41196238803 / 41196138008 | 2026-10-31 | 333b06a | jobs execute policy steps (UUID v7 conformance, lockfile verify — success)
+|===
+
+The same pin started on 2026-10-03 and did not start on 2026-10-17. The source did not change; the
+platform's enforcement did. "It worked when we merged it" is therefore not evidence, and the check
+has to run per publish, not once.
+
+== Mechanism
+
+* GitHub validates the *callee* against the callee repository's own
+  `.github/workflows/actions.lock` **as it exists at the pinned commit**.
+* A **leaf** dependency record (an action) must name the reviewed tag/branch in `ref:`; a record
+  whose `ref:` repeats its own 40-hex pin is rejected at *Set up job*. The pin stays in the record
+  key and in `commit: sha1-<40 hex>`.
+* A **reusable-workflow** record (callee `owner/repo/.github/workflows/x.yml@<ref>`) pins by SHA:
+  its `ref:` *is* the pin, plus the union of the callee's external `uses:` under `uses:`.
+* Keys stay SHA-shaped; `relock-sha-keys.sh` re-keys tag-spelled entries and the tag goes in `ref:`.
+
+=== Measured state per candidate source
+
+Checks run with one tool version (`main`'s scripts) against each tree: representation
+(`scripts/check-lock-pin-provenance.sh`), coverage (`scripts/check-lock-sync.sh`), closure
+(`scripts/close-lock.sh --check`). Older trees ship older *versions* of these scripts whose flags
+differ; the tool version is held fixed deliberately.
+
+[cols="1,1,1,1,1,2",options="header"]
+|===
+| Commit | Date | Behind fad242d | Records | Representation | Coverage / closure
+
+| fad242d | 2026-09-07 | 0 | 22 | *10 leaf self-SHA refs* | *OUT OF SYNC* (`mirror.yml` → `hyperpolymath/standards@571cc734` unrecorded)
+| 75bd599 | 2026-10-19 | 454 | 26 | pass | in sync / closed
+| 333b06a | 2026-10-19 | 461 | 28 | pass | in sync / closed — live consumer proof (hypatia)
+| 8d1a2aa | 2026-10-29 | 519 | 30 | pass | in sync / closed
+| 1725beb | 2026-10-29 | 527 | 30 | pass | in sync / closed — current `main`
+|===
+
+`fad242d` fails two independent startup gates: the leaf representation above, and a coverage gap where
+`mirror.yml` calls a *different* standards commit that has no record at all. Repairing only
+`actions/checkout` — the record the runner names first, because it is every job's first step — would
+have surfaced the next nine.
+
+=== Consumer pins measured on 2026-10-31
+
+[cols="2,2,1,3",options="header"]
+|===
+| Repository | Pin | Ancestor of main | State
+
+| hyperpolymath/cyo | hyperpolymath/standards@fad242d | yes | *broken source, and cyo also returns 0 jobs for valid pins*
+| hyperpolymath/hypatia | metadatastician/standards@333b06a | yes | valid; jobs execute
+| hyperpolymath/gitbot-fleet | hyperpolymath/standards@75bd599 | yes | valid by measurement; not yet canaried in-repo
+| metadatastician/burble | hyperpolymath/standards@01c9b0c9 | yes | predates the fix — needs measurement
+|===
+
+== Source-resolution expression audit
+
+`${{ job.workflow_sha }}` *— supported, used correctly.* 15 checkout sites in
+`governance-reusable.yml` (workflow-staleness, uuid-v7/v8-conformance, allowlist-preflight,
+actions-policy-live, validate-hypatia-baseline, package-policy, quality, actions-lock-verify,
+trusted-base, licence-consistency, exemption-ratchet, debt-ratchet, js-runtimes-provision,
+js-runtimes). Available only inside a called reusable workflow, where it is the *callee's* commit.
+It is not `github.workflow_sha` (the caller's), and not `github.job_workflow_sha`, which does not
+exist. It is unavailable on GitHub Enterprise Server. Nothing here needs changing.
+
+`ref: main` *— one remaining floating helper checkout.* `changelog-reusable.yml:126` checks out
+`metadatastician/standards@main` to read the canonical `cliff.toml`. It is data, not executed code,
+but it is the only floating ref left in the reusables. Recommended as a separate PR (consumer-visible,
+needs its own canary): `ref: ${{ job.workflow_sha }}`. *Not changed here.*
+
+Hypatia HEAD clones *— pinned by input, HEAD opt-in.* `hypatia-ref` (default `adb2f41d…`),
+`panic-ref` (`410a8f82…`), `pons-ref` (`bca1ea28…`); anything not 40-hex is rejected, and
+`git ls-remote … HEAD` runs only when a caller explicitly passes `HEAD`. The clone is
+`fetch --depth 1 origin "$SHA"` plus a `rev-parse` assertion, so the resolved commit builds and keys
+the cache. Residual: `HEAD` remains a supported input for canary callers.
+
+Reusable-dep refs *— one drift, advisory.* `--remote` on `main` reports exactly one:
+`hyperpolymath/cicd-squabbler@1ab1507a… ref: main` now resolves to `193349090e…`. Drift is measured
+*not* to be startup-fatal (`333b06a` records `dtolnay/rust-toolchain@e2a55d2f… ref: v1`; `v1` now
+resolves to `683b588c…`, and hypatia's jobs at that pin start and run).
+
+== The repair in this change
+
+* `scripts/check-lock-pin-provenance.sh` — representation + provenance: leaf `ref:` must name a
+  tag/branch, reusable records may pin by SHA, `commit:` must be `sha1-<lower hex>` agreeing with a
+  SHA-shaped key, tag-keyed records must record their own key. `--remote` resolves refs with
+  `git ls-remote` (drift advisory, unresolvable ref fatal, unreadable remote `UNVERIFIED`).
+  Exit 2 whenever inspection did not happen.
+* `scripts/tests/check-lock-pin-provenance-test.sh` — 18 fixture cases, including the exact
+  `fad242d` and `1725beb` record shapes.
+* `.github/workflows/lock-selfcheck.yml` — one extra step, same job and check name, so the required
+  context `Lockfile self-consistency` also covers records no workflow uses.
+* This document.
+
+Deliberately not done: no change to `check-actions-lock-gate.sh`, no new required context, no
+allow-list widening, no de-pinning, no job disabled.
+
+== Consumer migration — the canary protocol
+
+A *canary* here means one small workflow, in the consumer repository, that calls the shared
+governance reusable at exactly the candidate commit and does nothing else, so the run answers one
+question: **does runner setup accept this source pin from this repository?** It is not a policy test;
+it is the check that must pass before a policy test can happen.
+
+. *Verify the source* (git objects only, no writes):
+  `bash scripts/check-lock-pin-provenance.sh .github/workflows/actions.lock` → exit 0;
+  `bash scripts/check-lock-sync.sh .github/workflows` → in sync;
+  `bash scripts/close-lock.sh --check .github/workflows/actions.lock` → closed;
+  `bash scripts/lock-selfcheck.sh <sha>` → SELF-CONSISTENT (needs mikefarah yq v4).
+. *Confirm reachability* — the SHA must be an ancestor of the callee default branch. Existence is not
+  reachability, and a branch-tip repair commit is never callable.
+. *Canary one consumer:* a workflow whose only job is
+  `uses: metadatastician/standards/.github/workflows/governance-reusable.yml@<candidate>` on a
+  scratch branch. **Pass = the run has jobs.** Zero jobs or `startup_failure` = stop, do not repin.
+. *Enumerate a known-good control* in the same run: a second canary at a pin that already executes
+  somewhere (e.g. `333b06a` in hypatia). If the control also returns zero jobs, the blocker is the
+  consumer, not the source.
+. *Acknowledge the policy delta*, then repin `uses:`.
+. *Re-verify:* every expected job present, `Actions lockfile verify` green, required contexts reporting.
+
+=== Policy delta: fad242d → 1725beb (527 commits, 72 workflow files, +8497/−847)
+
+* `governance-reusable.yml` 1445 → 1903 lines; jobs 15 → 19
+  (+`js-runtimes-provision`, +`js-runtimes`, +`uuid-v7-conformance`, +`uuid-v8-conformance`).
+* New inputs `runs-on`, `baseline-strict`, pinned `hypatia-ref`; new optional secret
+  `HYPATIA_SCAN_PAT`.
+* Coordinates `hyperpolymath/standards` → `metadatastician/standards`; lock schema `v0.0.2` → `v0.0.3`.
+* Lock records 22 → 30.
+
+The same caution applies to every candidate: `75bd599` is 454 commits from the baseline. A repin to
+any valid commit is a policy upgrade; call it one.
+
+== Rollback
+
+*Consumer:* restore the previous `uses:` pin and push. If that pin is the broken one, governance
+reports _zero jobs_ and no required context arrives — a rollback to `fad242d` does not restore a gate,
+it removes one. To stay gated during a rollback, pin the last known-good SHA and re-run the canary.
+
+*Standards:* additive — one script, one test, one step, one document. Revert the merge; the required
+context name is unchanged, so no branch-protection surgery is needed.
+
+== Limits of this measurement
+
+* `gh actions-lock --verify-local` could not be run: the extension install fails downloading its
+  release asset (EOF). The three repo-owned checks above were run instead.
+* Mikefarah `yq` v4 is absent, so `lock-selfcheck.sh` was exercised as its three components.
+* Repository Administration settings are unreadable (`403`), the same blocker recorded in 8d1a2aa.
+* A consumer canary in `hyperpolymath/cyo` returned zero jobs for *every* pin tried, including
+  `333b06a`, which runs in hypatia today — a caller-side blocker in `cyo`, independent of this
+  defect and not diagnosable from here.
+* `hyperpolymath/cicd-squabbler@… ref: main` drift and `changelog-reusable.yml:126 ref: main` are
+  recorded as findings, not changed.
+
+== Coordination
+
+* *cyo:* fix its caller-side blocker first, then canary, then repin. A repin alone will not turn it green.
+* *Hypatia:* on `333b06a` and executing policy — the live evidence for that pin, and the natural first
+  canary for anything newer.
+* *gitbot-fleet / burble:* same matrix, canary in-repo before moving the pin.
+* *cicd-suite PR #66:* its representation guard is the sibling invariant, not a substitute for
+  coverage, closure or provenance.
