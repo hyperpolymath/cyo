@@ -1,6 +1,6 @@
-From 0b8e0339c4041befc7e46ea8e001268f7d92f474 Mon Sep 17 00:00:00 2001
+From 2aabbdb1fd0213cedb4dd6c515c140a610dc7217 Mon Sep 17 00:00:00 2001
 From: "Jonathan D.A. Jewell" <j.d.a.jewell@open.ac.uk>
-Date: Sat, 31 Oct 2026 16:06:53 +0000
+Date: Sat, 31 Oct 2026 23:53:49 +0000
 Subject: [PATCH 2/2] ci(lock): run the pin-provenance guard in the self-check
  job
 
@@ -31,6 +31,3 @@ index f7729c8..6671eb0 100644
 +        run: |
 +          set -euo pipefail
 +          bash scripts/check-lock-pin-provenance.sh .github/workflows/actions.lock
--- 
-2.39.5
-

@@ -122,7 +122,7 @@ resolves to `683b588c…`, and hypatia's jobs at that pin start and run).
   SHA-shaped key, tag-keyed records must record their own key. `--remote` resolves refs with
   `git ls-remote` (drift advisory, unresolvable ref fatal, unreadable remote `UNVERIFIED`).
   Exit 2 whenever inspection did not happen.
-* `scripts/tests/check-lock-pin-provenance-test.sh` — 18 fixture cases, including the exact
+* `scripts/tests/check-lock-pin-provenance-test.sh` — 20 fixture cases, including the exact
   `fad242d` and `1725beb` record shapes.
 * `.github/workflows/lock-selfcheck.yml` — one extra step, same job and check name, so the required
   context `Lockfile self-consistency` also covers records no workflow uses.

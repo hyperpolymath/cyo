@@ -12,12 +12,21 @@ That commit is an ancestor of standards `main`, but it **predates** the lock-rep
 handoff. Treat it as unverified rather than safe.
 
 Tasks:
-1. Measure the pin before touching anything. In a local standards clone:
-   `git archive 01c9b0c9 | tar -x -C /tmp/b`, then from `/tmp/b`:
-   `bash /tmp/std/scripts/check-lock-pin-provenance.sh .github/workflows/actions.lock`
-   (use the current `main` versions of the scripts — older trees ship older tool versions),
-   `bash /tmp/std/scripts/check-lock-sync.sh .github/workflows`,
-   `bash /tmp/std/scripts/close-lock.sh --check .github/workflows/actions.lock`.
+1. Measure the pin before touching anything. Set both directories up explicitly — the archive
+   target must exist before `tar` writes into it, and the scripts must come from current `main`
+   (older trees ship older tool versions):
+   [source,sh]
+   ----
+   rm -rf /tmp/std /tmp/b && mkdir -p /tmp/b
+   git clone --filter=blob:none https://github.com/metadatastician/standards /tmp/std
+   git -C /tmp/std archive 01c9b0c9f2646ebea0b30a9588462642ac94aee9 | tar -x -C /tmp/b
+   cd /tmp/b
+   bash /tmp/std/scripts/check-lock-pin-provenance.sh .github/workflows/actions.lock
+   bash /tmp/std/scripts/check-lock-sync.sh .github/workflows
+   bash /tmp/std/scripts/close-lock.sh --check .github/workflows/actions.lock
+   ----
+   The clone is filtered, so `git archive` of that older commit fetches the blobs it needs on demand;
+   it requires network access.
    Any representation failure means every cross-repo caller pinned there — including `burble` — is
    dying at runner setup.
 2. Record what `burble`'s Governance runs actually do today: last 5 runs, conclusion, and

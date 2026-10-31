@@ -189,6 +189,19 @@ fresh
 leaf_record v7.0.1 "sha1-$SHA" | lock
 remote_case '--remote: an unreadable remote is UNVERIFIED, never a silent pass' none 0 'UNVERIFIED actions/checkout'
 
+# A ref that merely BEGINS with a hex character is a normal ref and must be
+# examined. The old skip glob ([0-9a-fA-F][0-9a-fA-F]*) silently swallowed it
+# and reported the record as verified without ever resolving it.
+fresh
+printf "version: 'v0.0.3'\nworkflows: {}\ndependencies:\n    'actions/checkout@2026.1':\n        ref: '2026.1'\n        commit: 'sha1-%s'\n" "$SHA" | lock
+remote_case '--remote: a ref whose first two characters are hex (e.g. 2026.1) is examined, not skipped' gone 1 'does not resolve'
+
+# A reusable record may pin by SHA, but ref: and the key must name the same
+# commit. The leaf-only branch used to accept a mismatched pair.
+fresh
+reusable_fixture "$OTHER" "sha1-$SHA" | lock
+expect 'reusable record whose SHA ref disagrees with its key' 1 'disagrees with the record key'
+
 echo "------------------------------------------------------------"
 echo "check-lock-pin-provenance-test: ${pass} passed, ${fail} failed"
 [ "$fail" -eq 0 ] || exit 1

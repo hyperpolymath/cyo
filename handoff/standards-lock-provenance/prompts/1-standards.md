@@ -13,10 +13,29 @@ Context: a caller pinned to `fad242d35291de1898242d6737ba02b74a59a2f2` fails at 
 corrected records — f335165 (#1271) and cf8f912 (#1285). **Do not rewrite those records again.**
 
 Task:
-1. Apply `handoff/standards-lock-provenance/patches/0001-*.patch` and `0002-*.patch` on
-   `1725bebd` (or `git fetch <bundle> fix/lock-pin-provenance-guard`). Verify `git apply --check`
-   is clean first.
-2. Run: `bash scripts/tests/check-lock-pin-provenance-test.sh` (expect 18/18) and
+0. *Get the artifacts into this session first* — they live in `hyperpolymath/cyo`, not here:
+   [source,sh]
+   ----
+   git clone --depth 1 https://github.com/hyperpolymath/cyo /tmp/cyo-handoff
+   cp -r /tmp/cyo-handoff/handoff/standards-lock-provenance /tmp/handoff
+   ----
+1. Apply the patch series on `1725bebd` (do **not** use `patches/000*.patch`: that also selects the
+   cover letter and `git am` stops on it):
+   [source,sh]
+   ----
+   git checkout -b fix/lock-pin-provenance-guard 1725bebd
+   git apply --check /tmp/handoff/patches/0001-*.patch /tmp/handoff/patches/0002-*.patch
+   git am /tmp/handoff/patches/0001-*.patch /tmp/handoff/patches/0002-*.patch
+   ----
+   Bundle alternative — a fetch alone integrates nothing, so check the branch out after it:
+   [source,sh]
+   ----
+   git fetch /tmp/handoff/patches/fix-lock-pin-provenance-guard.bundle fix/lock-pin-provenance-guard
+   git checkout -B fix/lock-pin-provenance-guard FETCH_HEAD
+   ----
+   Copy the audit document across as well: it belongs at
+   `docs/audits/audit-2026-10-31-governance-startup-lock-repair.adoc`.
+2. Run: `bash scripts/tests/check-lock-pin-provenance-test.sh` (expect 20/20) and
    `bash scripts/check-lock-pin-provenance.sh .github/workflows/actions.lock` (expect exit 0).
 3. Regression: `bash scripts/check-lock-sync.sh .github/workflows` and
    `bash scripts/close-lock.sh --check .github/workflows/actions.lock` must both stay green.
