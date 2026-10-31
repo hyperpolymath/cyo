@@ -1,0 +1,36 @@
+From 0b8e0339c4041befc7e46ea8e001268f7d92f474 Mon Sep 17 00:00:00 2001
+From: "Jonathan D.A. Jewell" <j.d.a.jewell@open.ac.uk>
+Date: Sat, 31 Oct 2026 16:06:53 +0000
+Subject: [PATCH 2/2] ci(lock): run the pin-provenance guard in the self-check
+ job
+
+Same job and check name, so the required context Lockfile self-consistency keeps
+reporting while covering records that no workflow uses.
+---
+ .github/workflows/lock-selfcheck.yml | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/.github/workflows/lock-selfcheck.yml b/.github/workflows/lock-selfcheck.yml
+index f7729c8..6671eb0 100644
+--- a/.github/workflows/lock-selfcheck.yml
++++ b/.github/workflows/lock-selfcheck.yml
+@@ -59,3 +59,16 @@ jobs:
+           # On `pull_request` this is the MERGE PREVIEW, i.e. the content that
+           # would land on main, which is exactly the content callers will pin.
+           bash scripts/lock-selfcheck.sh "$sha"
++
++      - name: Check lock pin representation and provenance
++        # Sibling layer, not a replacement: lock-selfcheck.sh above answers
++        # "does every ref this commit USES have a keyed, closed record?" and
++        # needs mikefarah yq. This answers "is every RECORD's representation one
++        # the runner accepts at Set up job?" for every record in the lock, used
++        # or not, and needs no YAML dependency. Both run in this job so the
++        # required context `Lockfile self-consistency` keeps its name and
++        # covers both questions. Coverage and closure stay in
++        # check-lock-sync.sh / close-lock.sh --check, which lock-selfcheck runs.
++        run: |
++          set -euo pipefail
++          bash scripts/check-lock-pin-provenance.sh .github/workflows/actions.lock
+-- 
+2.39.5
+
