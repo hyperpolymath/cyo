@@ -1,3 +1,7 @@
+> **OBSOLETE — no action.** #1381 already landed a superset of this change
+> (`check-lock-pin-contract.sh`, `check-standards-helper-pins.sh`, the floating-checkout repairs and
+> the governance canary). Kept only to show what was proposed. See `../SUPERSEDED.md`.
+
 # Prompt — metadatastician/standards (the repair itself)
 
 Paste into an Arena session attached to `metadatastician/standards`.
