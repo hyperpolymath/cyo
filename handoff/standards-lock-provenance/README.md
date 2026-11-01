@@ -1,5 +1,9 @@
 # standards governance startup-lock repair — handoff package
 
+> **SUPERSEDED — do not publish `patches/`.** Standards `main` landed this repair first in
+> `7e9b1de` (#1381), which covers this scope and more. See `SUPERSEDED.md`. This directory is kept
+> for provenance and as an independent check, not as a submission.
+
 Source of the change: `metadatastician/standards`. Nothing here modifies a consumer repository.
 
 ## Revision note

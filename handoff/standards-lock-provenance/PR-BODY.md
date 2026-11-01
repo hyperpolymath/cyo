@@ -1,3 +1,7 @@
+> **OBSOLETE — do not open this PR.** Retained for provenance only. Standards `main` landed an
+> equivalent, wider repair in `7e9b1de` (#1381). See `SUPERSEDED.md` for the comparison and for the
+> three findings that remain uncovered.
+
 # Guard governance lock pins and prove source provenance before a commit is pinnable
 
 Target: `metadatastician/standards`, branch `fix/lock-pin-provenance-guard`, based on
