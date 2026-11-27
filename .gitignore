@@ -19,3 +19,5 @@ result-*
 
 # Guix
 /.guix-profile
+
+node_modules/
