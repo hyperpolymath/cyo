@@ -6,14 +6,52 @@ workflows:
     '.github/workflows/codeql.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
         - 'github/codeql-action@915412ff23e8b7659517e607487dbeae018f2934'
+    '.github/workflows/governance.yml':
+        - 'hyperpolymath/standards@fad242d35291de1898242d6737ba02b74a59a2f2'
+    '.github/workflows/hypatia-scan.yml':
+        - 'hyperpolymath/standards@81dbf2dd854b1444fd6236fa2352474383b2c2b9'
+    '.github/workflows/label-triage.yml': []
+    '.github/workflows/labels.yml': []
     '.github/workflows/push-email-notify.yml':
         - 'hyperpolymath/smtp-notify-action@e384daf6167a7a7567642d6a62060106244d2413'
+    '.github/workflows/secret-scanner.yml':
+        - 'hyperpolymath/standards@bd0df9ead7faf0cdfe0e13e7966d91e28d0101d4'
 dependencies:
+    'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9':
+        ref: 'v6.1.0'
+        commit: 'sha1-55cc8345863c7cc4c66a329aec7e433d2d1c52a9'
+        owner_id: 44036562
+        repo_id: 215566462
     'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1':
         ref: 'v7.0.1'
         commit: 'sha1-3d3c42e5aac5ba805825da76410c181273ba90b1'
         owner_id: 44036562
         repo_id: 197814629
+    'actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0':
+        ref: 'v7.0.0'
+        commit: 'sha1-9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0'
+        owner_id: 44036562
+        repo_id: 197814629
+    'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a':
+        ref: 'v7.0.1'
+        commit: 'sha1-043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
+        owner_id: 44036562
+        repo_id: 192625955
+    'editorconfig-checker/action-editorconfig-checker@840e866d93b8e032123c23bac69dece044d4d84c':
+        ref: 'v2.2.0'
+        commit: 'sha1-840e866d93b8e032123c23bac69dece044d4d84c'
+        owner_id: 26415196
+        repo_id: 297874902
+    'erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124':
+        ref: 'v1.24.1'
+        commit: 'sha1-54075bcc5e249e4758d363f27d099f55d843f124'
+        owner_id: 47606891
+        repo_id: 331103973
+    'github/codeql-action@7188fc363630916deb702c7fdcf4e481b751f97a':
+        ref: 'v4.37.1'
+        commit: 'sha1-7188fc363630916deb702c7fdcf4e481b751f97a'
+        owner_id: 9919
+        repo_id: 259445878
     'github/codeql-action@915412ff23e8b7659517e607487dbeae018f2934':
         ref: 'v4.39.5'
         commit: 'sha1-915412ff23e8b7659517e607487dbeae018f2934'
@@ -24,3 +62,31 @@ dependencies:
         commit: 'sha1-e384daf6167a7a7567642d6a62060106244d2413'
         owner_id: 6759885
         repo_id: 1352485172
+    'hyperpolymath/standards@81dbf2dd854b1444fd6236fa2352474383b2c2b9':
+        ref: '81dbf2dd854b1444fd6236fa2352474383b2c2b9'
+        commit: 'sha1-81dbf2dd854b1444fd6236fa2352474383b2c2b9'
+        owner_id: 297579217
+        repo_id: 1116521501
+        uses:
+            - 'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9'
+            - 'actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0'
+            - 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
+            - 'erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124'
+            - 'github/codeql-action@7188fc363630916deb702c7fdcf4e481b751f97a'
+    'hyperpolymath/standards@bd0df9ead7faf0cdfe0e13e7966d91e28d0101d4':
+        ref: 'bd0df9ead7faf0cdfe0e13e7966d91e28d0101d4'
+        commit: 'sha1-bd0df9ead7faf0cdfe0e13e7966d91e28d0101d4'
+        owner_id: 297579217
+        repo_id: 1116521501
+        uses:
+            - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
+    'hyperpolymath/standards@fad242d35291de1898242d6737ba02b74a59a2f2':
+        ref: 'fad242d35291de1898242d6737ba02b74a59a2f2'
+        commit: 'sha1-fad242d35291de1898242d6737ba02b74a59a2f2'
+        owner_id: 297579217
+        repo_id: 1116521501
+        uses:
+            - 'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9'
+            - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
+            - 'editorconfig-checker/action-editorconfig-checker@840e866d93b8e032123c23bac69dece044d4d84c'
+            - 'erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124'
